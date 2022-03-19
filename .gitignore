@@ -128,7 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.conf.py
+conf.py
 
 /config/
 daily_log

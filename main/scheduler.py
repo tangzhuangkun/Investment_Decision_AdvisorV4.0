@@ -1,11 +1,11 @@
-#! /usr/bin/env python3
-#coding:utf-8
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
+
 from apscheduler.schedulers.blocking import BlockingScheduler
 import sys
 sys.path.append('..')
 import log.custom_logger as custom_logger
-import parsers.check_saved_IP_availability as check_saved_IP_availability
-import parsers.collect_proxy_IP as collect_proxy_IP
 import parsers.generate_save_user_agent as generate_save_user_agent
 import data_collector.collect_stock_historical_estimation_info as collect_stock_historical_estimation_info
 import notification.notification_plan_during_trading as notification_plan_during_trading
@@ -36,24 +36,6 @@ class Scheduler:
 
 
 		#########  盘中(9:30-15:00)  #########
-
-		try:
-			# 每日14：39检查已存储的IP的可用性，删除不可用的
-			scheduler.add_job(func=check_saved_IP_availability.CheckSavedIPAvailability().main, trigger='cron',
-							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=14, minute=39,
-							  id='weekdayCheckSavedIPAvailability')
-		except Exception as e:
-			# 抛错
-			custom_logger.CustomLogger().log_writter(e, 'error')
-
-		try:
-			# 每个交易日14：41收集代理IP
-			scheduler.add_job(func=collect_proxy_IP.CollectProxyIP().main, trigger='cron',
-							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=14, minute=41,
-							  id='weekdayCollectProxyIP')
-		except Exception as e:
-			# 抛错
-			custom_logger.CustomLogger().log_writter(e, 'error')
 
 		try:
 			# 每10分钟执行一次股票的监控策略
