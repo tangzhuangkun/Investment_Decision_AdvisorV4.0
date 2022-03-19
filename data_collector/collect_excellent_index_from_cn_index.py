@@ -85,11 +85,12 @@ class CollectExcellentIndexFromCNIndex:
         '''
 
         # 随机选取，伪装，隐藏UA和IP
+        pick_an_int = random.randint(0,self.IP_UA_num-1)
         header = {"user-agent": self.ua_dict_list[random.randint(0,self.IP_UA_num-1)]['ua'], 'Connection': 'close'}
         proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                  self.ip_address_dict_list[random.randint(0,self.IP_UA_num-1)]['ip_address']),
+                                                  self.ip_address_dict_list[pick_an_int]['ip_address']),
                  "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    self.ip_address_dict_list[random.randint(0,self.IP_UA_num-1)]['ip_address'])}
+                                                    self.ip_address_dict_list[pick_an_int]['ip_address'])}
 
         return self.parse_interface_to_get_index_code_content(header, proxy)
 
@@ -162,17 +163,12 @@ class CollectExcellentIndexFromCNIndex:
         '''
 
         # 随机选取，伪装，隐藏UA和IP
-        # ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        # header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        # proxy = {'https': 'https://' + ip_address['ip_address']}
-
+        pick_an_int = random.randint(0, self.IP_UA_num - 1)
         header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num - 1)]['ua'], 'Connection': 'close'}
         proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                  self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
-                                                      'ip_address']),
+                                                  self.ip_address_dict_list[pick_an_int]['ip_address']),
                  "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
-                                                        'ip_address'])}
+                                                    self.ip_address_dict_list[pick_an_int]['ip_address'])}
 
         return self.parse_interface_to_get_index_relative_funds(index_code, header, proxy)
 
@@ -278,17 +274,12 @@ class CollectExcellentIndexFromCNIndex:
         '''
 
         # 随机选取，伪装，隐藏UA和IP
-        # ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        # header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        # proxy = {'https': 'https://' + ip_address['ip_address']}
-
+        pick_an_int = random.randint(0, self.IP_UA_num - 1)
         header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num - 1)]['ua'], 'Connection': 'close'}
         proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                  self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
-                                                      'ip_address']),
+                                                  self.ip_address_dict_list[pick_an_int]['ip_address']),
                  "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
-                                                        'ip_address'])}
+                                                    self.ip_address_dict_list[pick_an_int]['ip_address'])}
 
 
         return self.parse_and_check_whether_an_excellent_index(index_code, satisfied_index_list, threadLock, same_time_threading, header, proxy)
