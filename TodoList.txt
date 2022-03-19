@@ -1,0 +1,22 @@
+数据挖掘：
+1、对比两个指数的相似性（两个维度，权重股及权重）
+2、指数池中的指数，均相互做相关性对比，并每日输出结论
+
+
+指数策略：
+# https://csi-web-dev.oss-cn-shanghai-finance-1-pub.aliyuncs.com/technical-documentation%2Fcms_add%2F20220124113030-%E4%B8%AD%E8%AF%81%E6%8C%87%E6%95%B0%E6%95%B0%E6%8D%AE%E6%96%87%E4%BB%B6%E6%9C%8D%E5%8A%A1%E8%A7%84%E8%8C%83%EF%BC%88%E8%B5%84%E8%AE%AF%E5%95%86%E4%B8%93%E7%94%A8%EF%BC%89V1.3.14_clean_version.pdf
+# 市盈率 2
+
+https://wenku.baidu.com/view/5b03ce2a0e22590102020740be1e650e52eacfbc.html
+调整股本数
+
+1、PS策略改造
+2、PB策略改造
+3、PS策略
+4、股息策略
+5、ROE策略
+
+
+可转债策略：
+1、增加可转债的双低策略
+
