@@ -5,12 +5,14 @@ import time
 import requests
 import json
 import threading
+import random
 
 import sys
 sys.path.append("..")
 import parsers.disguise as disguise
 import log.custom_logger as custom_logger
 import database.db_operator as db_operator
+import conf
 
 class CollectExcellentIndexFromCNIndex:
     # 从国证指数官网接口收集过去几年表现优异的指数
@@ -24,7 +26,11 @@ class CollectExcellentIndexFromCNIndex:
         self.five_year_yield_rate_standard = 15
         # 最大线程数
         self.max_thread_num = 20
-
+        # 同时获取多少个 IP和UA
+        self.IP_UA_num = 15
+        # 获取到的IP和UA样式
+        # 如 ([{'ip_address': '27.158.237.107:24135'}, {'ip_address': '27.151.158.219:50269'}], [{'ua': 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1464.0 Safari/537.36'}, {'ua': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0.6'}])
+        self.ip_address_dict_list, self.ua_dict_list = disguise.Disguise().get_multi_IP_UA(self.IP_UA_num)
 
     def parse_interface_to_get_index_code_content(self, header, proxy):
         '''
@@ -78,10 +84,12 @@ class CollectExcellentIndexFromCNIndex:
         return: 数代码的set
         '''
 
-        # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'https': 'https://' + ip_address['ip_address']}
+        # 随机选取，伪装，隐藏UA和IP
+        header = {"user-agent": self.ua_dict_list[random.randint(0,self.IP_UA_num-1)]['ua'], 'Connection': 'close'}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                  self.ip_address_dict_list[random.randint(0,self.IP_UA_num-1)]['ip_address']),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    self.ip_address_dict_list[random.randint(0,self.IP_UA_num-1)]['ip_address'])}
 
         return self.parse_interface_to_get_index_code_content(header, proxy)
 
@@ -153,10 +161,18 @@ class CollectExcellentIndexFromCNIndex:
         :return:
         '''
 
-        # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'https': 'https://' + ip_address['ip_address']}
+        # 随机选取，伪装，隐藏UA和IP
+        # ip_address, ua = disguise.Disguise().get_one_IP_UA()
+        # header = {"user-agent": ua['ua'], 'Connection': 'close'}
+        # proxy = {'https': 'https://' + ip_address['ip_address']}
+
+        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num - 1)]['ua'], 'Connection': 'close'}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                  self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
+                                                      'ip_address']),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
+                                                        'ip_address'])}
 
         return self.parse_interface_to_get_index_relative_funds(index_code, header, proxy)
 
@@ -261,10 +277,19 @@ class CollectExcellentIndexFromCNIndex:
         :return:
         '''
 
-        # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'https': 'https://' + ip_address['ip_address']}
+        # 随机选取，伪装，隐藏UA和IP
+        # ip_address, ua = disguise.Disguise().get_one_IP_UA()
+        # header = {"user-agent": ua['ua'], 'Connection': 'close'}
+        # proxy = {'https': 'https://' + ip_address['ip_address']}
+
+        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num - 1)]['ua'], 'Connection': 'close'}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                  self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
+                                                      'ip_address']),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    self.ip_address_dict_list[random.randint(0, self.IP_UA_num - 1)][
+                                                        'ip_address'])}
+
 
         return self.parse_and_check_whether_an_excellent_index(index_code, satisfied_index_list, threadLock, same_time_threading, header, proxy)
 
@@ -331,7 +356,7 @@ class CollectExcellentIndexFromCNIndex:
                                             relative_fund_code,relative_fund_name,p_day)
                         db_operator.DBOperator().operate("insert", "financial_data", inserting_sql)
                         # 日志记录
-                        msg = '将从国证官网接口获取的优异指数' + p_day + index_code + index_name + ' 存入数据库时成功'
+                        msg = '将从国证官网接口获取的优异指数' + p_day + index_code + index_name + ' 存入数据库成功'
                         custom_logger.CustomLogger().log_writter(msg, 'info')
 
                     except Exception as e:
