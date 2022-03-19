@@ -9,6 +9,7 @@ import time
 import sys
 sys.path.append("..")
 import database.db_operator as db_operator
+import log.custom_logger as custom_logger
 import conf
 
 class Disguise:
@@ -25,18 +26,29 @@ class Disguise:
 		:return:  1个IP和1个UA
 		返回例如：({'ip_address': '183.164.244.236:18220'}, {'ua': 'Mozilla/5.0 (X11; NetBSD) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36'})
 		'''
+		try:
+			# 从API获取代理IP
+			response = requests.get(
+				"https://proxy.qg.net/allocate?Key="+conf.proxyIPUsername+"&Num=1&AreaId=&DataFormat=json&DataSeparator=&Detail=0",
+				timeout=1)
+			# json格式解码
+			data_json = json.loads(response.text)
 
-		# 从API获取代理IP
-		response = requests.get(
-			"https://proxy.qg.net/allocate?Key="+conf.proxyIPUsername+"&Num=1&AreaId=&DataFormat=json&DataSeparator=&Detail=0",
-			timeout=1)
-		# json格式解码
-		data_json = json.loads(response.text)
+			if(data_json["Code"]!=0):
+				# 日志记录
+				msg = "IP代理接口返回失败代码 " + str(data_json["Code"])
+				custom_logger.CustomLogger().log_writter(msg, lev='warning')
+				return {'ip_address': None}, {'ua': None}
 
-		# 获取到的代理IP+代理端口
-		ipAndPort = data_json["Data"][0]["host"]
-		ip_address = {"ip_address":ipAndPort}
-		
+			# 获取到的代理IP+代理端口
+			ipAndPort = data_json["Data"][0]["host"]
+			ip_address = {"ip_address":ipAndPort}
+		except Exception as e:
+			# 日志记录
+			msg = "调用IP代理接口失败 " + str(e)
+			custom_logger.CustomLogger().log_writter(msg, lev='warning')
+			return self.get_one_IP_UA()
+
 		# 获取UA
 		ua_sql = "SELECT ua FROM fake_user_agent ORDER BY RAND() LIMIT 1"
 		ua = db_operator.DBOperator().select_one('parser_component',ua_sql)
