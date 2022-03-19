@@ -33,16 +33,17 @@ class Disguise:
 				timeout=1)
 			# json格式解码
 			data_json = json.loads(response.text)
-
+			# 成功返回，但返回中的内容不可用
 			if(data_json["Code"]!=0):
 				# 日志记录
 				msg = "IP代理接口返回失败代码 " + str(data_json["Code"])
 				custom_logger.CustomLogger().log_writter(msg, lev='warning')
 				return {'ip_address': None}, {'ua': None}
-
-			# 获取到的代理IP+代理端口
-			ipAndPort = data_json["Data"][0]["host"]
-			ip_address = {"ip_address":ipAndPort}
+			# # 成功返回
+			else:
+				# 获取到的代理IP+代理端口
+				ipAndPort = data_json["Data"][0]["host"]
+				ip_address = {"ip_address":ipAndPort}
 		except Exception as e:
 			# 日志记录
 			msg = "调用IP代理接口失败 " + str(e)
@@ -67,19 +68,34 @@ class Disguise:
 		'''
 
 		ip_address_dict_list = list()
-		# 从API获取代理IP
-		response = requests.get(
-			"https://proxy.qg.net/allocate?Key=" + conf.proxyIPUsername + "&Num="+str(num)+
-			"&AreaId=&DataFormat=json&DataSeparator=&Detail=0",timeout=1)
-		# json格式解码
-		data_json = json.loads(response.text)
-		data_list =data_json["Data"]
-		for unit in data_list:
-			# 获取到的代理IP+代理端口
-			ipAndPort = unit["host"]
-			ip_address = {"ip_address": ipAndPort}
-			# 添加进返回中
-			ip_address_dict_list.append(ip_address)
+
+		try:
+			# 从API获取代理IP
+			response = requests.get(
+				"https://proxy.qg.net/allocate?Key=" + conf.proxyIPUsername + "&Num="+str(num)+
+				"&AreaId=&DataFormat=json&DataSeparator=&Detail=0",timeout=1)
+			# json格式解码
+			data_json = json.loads(response.text)
+			# 成功返回，但返回中的内容不可用
+			if (data_json["Code"] != 0):
+				# 日志记录
+				msg = "IP代理接口返回失败代码 " + str(data_json["Code"])
+				custom_logger.CustomLogger().log_writter(msg, lev='warning')
+				return [{'ip_address': None}], [{'ua': None}]
+			# 成功返回
+			else:
+				data_list =data_json["Data"]
+				for unit in data_list:
+					# 获取到的代理IP+代理端口
+					ipAndPort = unit["host"]
+					ip_address = {"ip_address": ipAndPort}
+					# 添加进返回中
+					ip_address_dict_list.append(ip_address)
+		except Exception as e:
+			# 日志记录
+			msg = "调用IP代理接口失败 " + str(e)
+			custom_logger.CustomLogger().log_writter(msg, lev='warning')
+			return self.get_one_IP_UA()
 		
 		# 获取多个UA
 		ua_sql = "SELECT ua FROM fake_user_agent LIMIT %s" %(str(num))
