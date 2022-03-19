@@ -1,16 +1,20 @@
-from bs4 import BeautifulSoup
-import requests
-import time
-import json
-import threading
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
 
+import json
 import sys
+import threading
+import time
+
+import requests
 
 sys.path.append("..")
 import parsers.disguise as disguise
 import log.custom_logger as custom_logger
 import database.db_operator as db_operator
 import data_miner.data_miner_common_target_index_operator as target_index_operator
+import conf
 
 
 class CollectCSIndexTop10StocksWeightDaily:
@@ -49,7 +53,7 @@ class CollectCSIndexTop10StocksWeightDaily:
             requests.packages.urllib3.disable_warnings()
             # 得到页面的信息
             raw_page = requests.get(page_address, headers=header, proxies=proxy, verify=False, stream=False,
-                                    timeout=10).text
+                                    timeout=3).text
             # 转换成字典数据
             data_json = json.loads(raw_page)
             # 获取更新日期
@@ -62,7 +66,7 @@ class CollectCSIndexTop10StocksWeightDaily:
                 stock_detail_info_list.append(stock_info['securityName'])
                 if 'Shenzhen' in stock_info['marketNameEn']:
                     stock_detail_info_list.append('sz')
-                elif 'Shanghai' in stock_info['marketNameEn'] :
+                elif 'Shanghai' in stock_info['marketNameEn']:
                     stock_detail_info_list.append('sh')
                 else:
                     stock_detail_info_list.append('unknown')
@@ -73,15 +77,14 @@ class CollectCSIndexTop10StocksWeightDaily:
             # 返回如 ( '2021-09-24', [['600809', '山西汾酒', 'sh','16.766190846153634'], ['600519', '贵州茅台', 'sh','13.277568906087126'], ,,,,])
             return p_day, top_10_stocks_detail_info_list
 
-
             # 日志记录
             # msg = "从中证官网 " + page_address + '  ' + "获取了 " + expiration_date + "的前十成份股信息"
             # custom_logger.CustomLogger().log_writter(msg, lev='info')
-        
+
         # 如果读取超时，重新在执行一遍解析页面
         except requests.exceptions.ReadTimeout:
             # 日志记录
-            msg = "从中证官网" + page_address + '  ' + "获取前十成份股信息 "+" ReadTimeout。" + " 即将重试"
+            msg = "从中证官网" + page_address + '  ' + "获取前十成份股信息 " + " ReadTimeout。" + " 即将重试"
             custom_logger.CustomLogger().log_writter(msg, lev='warning')
             # 返回解析页面得到的股票指标
             return self.get_single_index_latest_constituent_stock_and_weight(index_id)
@@ -117,13 +120,13 @@ class CollectCSIndexTop10StocksWeightDaily:
         # 存放指数代码及对应的指数名称的字典
         target_cs_index_dict = dict()
 
-        #[{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965',
+        # [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965',
         # 'index_code_with_market_code': '399965.XSHE'},，，]
-        target_cs_index_info_list =  target_index_operator.DataMinerCommonTargetIndexOperator().get_given_index_company_index("中证")
+        target_cs_index_info_list = target_index_operator.DataMinerCommonTargetIndexOperator().get_given_index_company_index(
+            "中证")
         for info in target_cs_index_info_list:
             target_cs_index_dict[info["index_code"]] = info["index_name"]
         return target_cs_index_dict
-
 
     def get_single_index_latest_constituent_stock_and_weight(self, index_id):
         # 从中证官网获取单个指数最新的前十成份股和权重信息
@@ -133,8 +136,17 @@ class CollectCSIndexTop10StocksWeightDaily:
 
         # 伪装，隐藏UA和IP
         ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'https://' + ip_address['ip_address']}
+        header = {"user-agent": ua['ua'],
+                  "Cookie": "Hm_lvt_12373533b632515a7c0ccd65e7fc5835=1632124825,1632124985,1632125584,1632555621; Hm_lpvt_12373533b632515a7c0ccd65e7fc5835=1632839289; Hm_lvt_41afd32af5fa51d4961a2e2a06989a9d=1633618502; Hm_lpvt_41afd32af5fa51d4961a2e2a06989a9d=1633704814; acw_tc=781bad2316469228105796026e29f0a6e550051bfe50b66439d469fb286cd0; zg_did=%7B%22did%22%3A%20%2217c9e6a4f3e9be-0cb64254ff0be1-113e6756-384000-17c9e6a4f3f894%22%7D; zg_6df0ba28cbd846a799ab8f527e8cc62b=%7B%22sid%22%3A%201646922811125%2C%22updated%22%3A%201646922889835%2C%22info%22%3A%201646837295791%2C%22superProperty%22%3A%20%22%7B%5C%22%E5%BA%94%E7%94%A8%E5%90%8D%E7%A7%B0%5C%22%3A%20%5C%22%E4%B8%AD%E8%AF%81%E6%8C%87%E6%95%B0%E5%AE%98%E7%BD%91%5C%22%7D%22%2C%22platform%22%3A%20%22%7B%7D%22%2C%22utm%22%3A%20%22%7B%7D%22%2C%22referrerDomain%22%3A%20%22%22%2C%22landHref%22%3A%20%22https%3A%2F%2Fwww.csindex.com.cn%2Fzh-CN%2Findices%2Findex-detail%2F"+index_id+"%23%2Findices%2Ffamily%2Fdetail%3FindexCode%3D"+index_id+"%22%2C%22zs%22%3A%200%2C%22sc%22%3A%200%2C%22firstScreen%22%3A%201646922811125%7D",
+                  "referer": "https://www.csindex.com.cn/zh-CN/indices/index-detail/"+index_id,
+                  "Connection": "keep-alive",
+                  "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                  "Accept-Encoding": "gzip, deflate, br",
+                  "Accept": "application/json, text/plain, */*",
+                  "Host": "www.csindex.com.cn"}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    ip_address["ip_address"])}
 
         return self.parse_page_content(index_id, header, proxy)
 
@@ -173,7 +185,7 @@ class CollectCSIndexTop10StocksWeightDaily:
                 return False
         return True
 
-    def save_index_info_into_db(self,index_code, index_name, p_day, top_10_stocks_detail_info_list):
+    def save_index_info_into_db(self, index_code, index_name, p_day, top_10_stocks_detail_info_list):
         # 将指数成分股信息存入数据库
         # index_code，指数代码，399396
         # index_name，指数名称，国证食品饮料行业
@@ -214,7 +226,6 @@ class CollectCSIndexTop10StocksWeightDaily:
                 msg = '将从中证官网获取的' + p_day + index_code + index_name + '的前十大权重股存入数据库时错误  ' + str(e)
                 custom_logger.CustomLogger().log_writter(msg, 'error')
 
-
     def collect_target_index_stock_info_by_single_thread(self):
         # 单线程收集目标池中的中证指数每日前十大权重股构成,并存入数据库
 
@@ -225,8 +236,7 @@ class CollectCSIndexTop10StocksWeightDaily:
         for index_code in cs_target_indexes_names_dict:
             self.get_check_and_save_index_info(index_code, cs_target_indexes_names_dict)
 
-
-    def get_check_and_save_index_info(self, index_code, target_cs_index_dict,threadLock):
+    def get_check_and_save_index_info(self, index_code, target_cs_index_dict, threadLock):
         # 从接口获取前十成分股信息，检查是否存储过，并存储指数成分股及权重信息
         # index_code,指数代码，399997
         # target_cs_index_dict，指数代码及对应的指数名称的字典
@@ -259,7 +269,6 @@ class CollectCSIndexTop10StocksWeightDaily:
             # 释放锁，开启下一个线程
             threadLock.release()
 
-
     def collect_target_index_stock_info_by_multi_threads(self):
         # 多线程收集目标池中的中证指数每日前十大权重股构成,并存入数据库
 
@@ -289,19 +298,17 @@ class CollectCSIndexTop10StocksWeightDaily:
         for mem in running_threads:
             mem.join()
 
-
     def main(self):
-        #self.collect_target_index_stock_info_by_single_thread()
+        # self.collect_target_index_stock_info_by_single_thread()
         self.collect_target_index_stock_info_by_multi_threads()
 
 
 if __name__ == '__main__':
-
     time_start = time.time()
     go = CollectCSIndexTop10StocksWeightDaily()
-    #go.get_single_index_latest_constituent_stock_and_weight('399997')
-    #real_time_pe_ttm = go.get_single_index_latest_constituent_stock_and_weight('399997')
-    #print(real_time_pe_ttm)
+    # go.get_single_index_latest_constituent_stock_and_weight('399997')
+    # real_time_pe_ttm = go.get_single_index_latest_constituent_stock_and_weight('399997')
+    # print(real_time_pe_ttm)
     go.main()
     time_end = time.time()
     print('Time Cost: ' + str(time_end - time_start))
