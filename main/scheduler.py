@@ -94,31 +94,11 @@ class Scheduler:
 			custom_logger.CustomLogger().log_writter(e, 'error')
 
 		try:
-			# 每个交易日18：03, 从中证指数官网接口收集过去几年表现优异的指数
-			scheduler.add_job(func=collect_excellent_index_from_cs_index.CollectExcellentIndexFromCSIndex().main,
-							  trigger='cron',
-							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=3,
-							  id='weekdayCollectCSExcellentIndices')
-		except Exception as e:
-			# 抛错
-			custom_logger.CustomLogger().log_writter(e, 'error')
-
-		try:
 			# 每个交易日18：04收集国证官网指数最新构成信息
 			scheduler.add_job(func=collect_index_weight_from_cnindex_interface.CollectIndexWeightFromCNIndexInterface().main,
 							  trigger='cron',
 							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=4,
 							  id='weekdayCollectCNIndexStocksWeightFromInterface')
-		except Exception as e:
-			# 抛错
-			custom_logger.CustomLogger().log_writter(e, 'error')
-
-		try:
-			# 每个交易日18：04，从国证指数官网接口收集过去几年表现优异的指数
-			scheduler.add_job(func=collect_excellent_index_from_cn_index.CollectExcellentIndexFromCNIndex().main,
-							  trigger='cron',
-							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=4,
-							  id='weekdayCollectCNExcellentIndices')
 		except Exception as e:
 			# 抛错
 			custom_logger.CustomLogger().log_writter(e, 'error')
@@ -165,8 +145,28 @@ class Scheduler:
 			# 抛错
 			custom_logger.CustomLogger().log_writter(e, 'error')
 
-
 		#####################      每月运行    ###################################################
+
+		try:
+			# 每月1号和17号，19：03，从国证指数官网接口收集过去几年表现优异的指数
+			scheduler.add_job(func=collect_excellent_index_from_cn_index.CollectExcellentIndexFromCNIndex().main,
+							  trigger='cron',
+							  month='1-12', day='1,17', hour=19, minute=3,
+							  id='collectCNExcellentIndicesTwiceAMonth')
+		except Exception as e:
+			# 抛错
+			custom_logger.CustomLogger().log_writter(e, 'error')
+
+		try:
+			# 每月1号和17号，19：05, 从中证指数官网接口收集过去几年表现优异的指数
+			scheduler.add_job(func=collect_excellent_index_from_cs_index.CollectExcellentIndexFromCSIndex().main,
+							  trigger='cron',
+							  month='1-12', day='1,17', hour=19, minute=5,
+							  id='collectCSExcellentIndicesTwiceAMonth')
+		except Exception as e:
+			# 抛错
+			custom_logger.CustomLogger().log_writter(e, 'error')
+
 
 
 
