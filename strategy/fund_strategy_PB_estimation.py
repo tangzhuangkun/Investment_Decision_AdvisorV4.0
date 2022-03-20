@@ -243,7 +243,7 @@ class FundStrategyPBEstimation:
         last_trading_day_pb, last_trading_day_pb_wo_gw = self.get_last_trading_day_PB(index_code)
 
         # 获取指数最新的涨跌率
-        index_latest_increasement_decreasement_rate = data_collector_common_index_collector.DataCollectorCommonIndexCollector().get_index_latest_increasement_decreasement_rate(
+        index_latest_increasement_decreasement_rate = data_collector_common_index_collector.DataCollectorCommonIndexCollector().get_target_latest_increasement_decreasement_rate(
             index_code_with_location)
 
         # 根据市净率的同比涨跌幅，预估实时的扣商誉市净率

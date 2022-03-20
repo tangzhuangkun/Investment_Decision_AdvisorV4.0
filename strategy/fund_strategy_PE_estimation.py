@@ -257,7 +257,7 @@ class FundStrategyPEEstimation:
         last_trading_day_pe_ttm, last_trading_day_pe_ttm_nonrecurring = self.get_last_trading_day_PE(index_code)
 
         # 获取指数最新的涨跌率
-        index_latest_increasement_decreasement_rate = data_collector_common_index_collector.DataCollectorCommonIndexCollector().get_index_latest_increasement_decreasement_rate(index_code_with_location)
+        index_latest_increasement_decreasement_rate = data_collector_common_index_collector.DataCollectorCommonIndexCollector().get_target_latest_increasement_decreasement_rate(index_code_with_location)
 
         # 根据PETTM的同比涨跌幅，预估实时的扣非市盈率
         index_real_time_predictive_pe_ttm_nonrecurring = round(last_trading_day_pe_ttm_nonrecurring * (1 + index_latest_increasement_decreasement_rate/100), 5)

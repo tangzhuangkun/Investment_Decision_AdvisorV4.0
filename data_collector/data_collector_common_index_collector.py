@@ -13,7 +13,7 @@ class DataCollectorCommonIndexCollector:
     def __init__(self):
         pass
 
-    def get_index_latest_increasement_decreasement_rate(self, code_with_location):
+    def get_target_latest_increasement_decreasement_rate(self, code_with_location):
         '''
         获取指数/股票最新的涨跌率
         :param code_with_location: 指数/股票代码(含上市地), 必须如 sz399965，代码前面带上市地
@@ -39,7 +39,7 @@ class DataCollectorCommonIndexCollector:
 if __name__ == '__main__':
     time_start = time.time()
     go = DataCollectorCommonIndexCollector()
-    result = go.get_index_latest_increasement_decreasement_rate('sz399965')
+    result = go.get_target_latest_increasement_decreasement_rate('sz399965')
     print(result)
     time_end = time.time()
     print('time:')
