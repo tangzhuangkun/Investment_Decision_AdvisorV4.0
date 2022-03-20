@@ -1,45 +1,44 @@
-import requests
-import json
-import time
-import sys
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
 
+import time
+import akshare
+import datetime
+
+import sys
 sys.path.append("..")
-import config.joinquant_account_info as joinquant_account_info
 import log.custom_logger as custom_logger
 import database.db_operator as db_operator
 
+
 class CollectTradingDays:
-    # 从聚宽接口收集交易日
-    # 运行频率：每天收盘后
+    # 从akshare接口收集交易日
 
     def __init__(self):
-
-        # 因下面代码，在存入交易日期时，会存在重复插入的问题，会产生Warning
-        # 但warning在Python中是不会被try except捕获的，所以首先修改它，让try except可以捕获warning
-        #warnings.filterwarnings('error')
         pass
 
     def collect_all_trading_days(self):
-        # 从joinquant获取所有的交易日期
+        # 从akshare获取所有的交易日期
 
-        url, body, token = joinquant_account_info.JoinquantAccountInfo().get_token()
-        body = {
-            "method": "get_all_trade_days",
-            "token": token
-        }
         try:
-            # 获取聚宽返回的指数构成信息
-            response = requests.post(url, data=json.dumps(body))
-            return response.text
+            # 从从akshare接口获取所有的交易日期
+            tool_trade_date_hist_sina_df = akshare.tool_trade_date_hist_sina()
+            # 从panda dataframe格式转为list
+            all_trade_dates_list = tool_trade_date_hist_sina_df["trade_date"].tolist()
+            return all_trade_dates_list
         except Exception as e:
             # 日志记录
-            msg = '无法从joinquant获取所有的交易日期' + '  ' + str(e)
+            msg = '无法从akshare获取所有的交易日期' + '  ' + str(e)
             custom_logger.CustomLogger().log_writter(msg, 'error')
 
 
     def is_saved_or_not(self,trading_day):
-        # 检查一个交易日期是否已经存在
-        # trading_day: 交易日期，如 2021-06-09
+        '''
+        检查一个交易日期是否已经存在
+        :param trading_day: 交易日期，如 2021-06-09
+        :return:
+        '''
 
         try:
             # 查询sql
@@ -57,8 +56,11 @@ class CollectTradingDays:
 
 
     def save_a_trading_day_into_db(self, trading_day):
-        # 将一个交易日期存入数据库
-        # trading_day: 交易日期，如 2021-06-09
+        '''
+        将一个交易日期存入数据库
+        :param trading_day: 交易日期，如 2021-06-09
+        :return:
+        '''
 
         # 是否存入成功的标志
         flag = True
@@ -69,7 +71,7 @@ class CollectTradingDays:
         if existOrNot is None:
             # 插入sql
             inserting_sql = "INSERT IGNORE INTO trading_days (trading_date, area, source) VALUES ('%s', '%s', '%s')" \
-                            % (trading_day, "中国大陆", "聚宽")
+                            % (trading_day, "中国大陆", "akshare")
             # 将数据存入数据库
             db_operator.DBOperator().operate("insert", "financial_data", inserting_sql)
             return flag
@@ -82,13 +84,10 @@ class CollectTradingDays:
         # 将获取到的，截止至今日的交易日期存入数据可
 
         # 获取所有的交易日期
-        all_trading_days_str = self.collect_all_trading_days()
-        # 将聚宽传回的交易日期信息，由string转化为list，便于处理
-        all_trading_days_list = all_trading_days_str.replace('\n', ',').split(',')
-
+        all_trading_days_list = self.collect_all_trading_days()
 
         # 获取当前日期
-        today = time.strftime("%Y-%m-%d", time.localtime())
+        today = datetime.date.today()
         # 倒序遍历，从近的日期向远的日期遍历
         for i in range(len(all_trading_days_list)-1,-1,-1):
             # 如果日期大于今天日期，则略过
@@ -101,10 +100,16 @@ class CollectTradingDays:
                 if not isSavedSuccessfully:
                     break
 
+    def main(self):
+        self.save_all_trading_days_into_db()
+
 if __name__ == '__main__':
+    time_start = time.time()
     go = CollectTradingDays()
     #result = go.collect_all_trading_days()
     #print(result)
     go.save_all_trading_days_into_db()
     #existOrNot = go.is_saved_or_not("2021-06-04")
     #print(existOrNot)
+    time_end = time.time()
+    print('Time Cost: ' + str(time_end - time_start))
