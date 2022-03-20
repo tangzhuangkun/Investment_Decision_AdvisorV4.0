@@ -1,12 +1,13 @@
-# coding:utf-8
-# !user/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
 
 from bs4 import BeautifulSoup
 import requests
 import time
+import conf
 
 import sys
-
 sys.path.append("..")
 import parsers.disguise as disguise
 import log.custom_logger as custom_logger
@@ -60,8 +61,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_pe_ttm = tr_list[4].find_all('span')[1].get_text()
                     # 日志记录
-                    msg = "Collected stock real time " + indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time " + indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动市盈率
                     return real_time_pe_ttm
 
@@ -71,8 +72,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_pb = tr_list[5].find_all('span')[1].get_text()
                     # 日志记录
-                    msg = "Collected stock real time " + indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time " + indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动市盈率
                     return real_time_pb
 
@@ -82,8 +83,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_dr_ttm = tr_list[5].find_all('span')[3].get_text()
                     # 日志记录
-                    msg = "Collected stock real time " + indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time " + indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动股息率
                     return real_time_dr_ttm
 
@@ -102,8 +103,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_pe_ttm = tr_list[4].find_all('span')[1].get_text()
                     # 日志记录
-                    msg = "Collected stock real time " + indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time " + indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动市盈率
                     return real_time_pe_ttm
 
@@ -113,8 +114,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_pb = tr_list[5].find_all('span')[1].get_text()
                     # 日志记录
-                    msg = "Collected stock real time " + indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time " + indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动市盈率
                     return real_time_pb
 
@@ -124,8 +125,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_dr_ttm = tr_list[5].find_all('span')[3].get_text()
                     # 日志记录
-                    msg = "Collected stock real time "+ indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time "+ indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动股息率
                     return real_time_dr_ttm
 
@@ -144,8 +145,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_pe_ttm = tr_list[2].find_all('span')[3].get_text()
                     # 日志记录
-                    msg = "Collected stock real time " + indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time " + indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动市盈率
                     return real_time_pe_ttm
 
@@ -155,8 +156,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_pb = tr_list[3].find_all('span')[3].get_text()
                     # 日志记录
-                    msg = "Collected stock real time " + indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time " + indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动市盈率
                     return real_time_pb
 
@@ -166,8 +167,8 @@ class GetStockRealTimeIndicatorFromXueqiu:
                     tr_list = real_time_stock_info.find_all('tr')
                     real_time_dr_ttm = tr_list[5].find_all('span')[1].get_text()
                     # 日志记录
-                    msg = "Collected stock real time "+ indicator + " from " + page_address
-                    custom_logger.CustomLogger().log_writter(msg, lev='debug')
+                    # msg = "Collected stock real time "+ indicator + " from " + page_address
+                    # custom_logger.CustomLogger().log_writter(msg, lev='debug')
                     # 返回 股票滚动股息率
                     return real_time_dr_ttm
 
@@ -223,7 +224,9 @@ class GetStockRealTimeIndicatorFromXueqiu:
         # 伪装，隐藏UA和IP
         ip_address, ua = disguise.Disguise().get_one_IP_UA()
         header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'http://' + ip_address['ip_address']}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    ip_address["ip_address"])}
 
         return self.parse_page_content(stock_id, header, proxy, indicator)
 
