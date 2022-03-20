@@ -1,5 +1,6 @@
-# coding:utf-8
-# !user/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
 
 import requests
 import time
@@ -8,6 +9,7 @@ import sys
 sys.path.append("..")
 import parsers.disguise as disguise
 import log.custom_logger as custom_logger
+import conf
 
 class GetStockRealTimeIndicatorFromInterfaces:
     # 从腾讯接口获取实时估值数据
@@ -20,7 +22,7 @@ class GetStockRealTimeIndicatorFromInterfaces:
 
 
     def get_interface_content(self, stock_id, header, proxy, indicator):
-        # 解析雪球网页信息
+        # 解析接口信息
         # stock_id: 股票代码（2位上市地+6位数字， 如 sz000596）
         # page_address，地址
         # header，伪装的UA
@@ -103,7 +105,9 @@ class GetStockRealTimeIndicatorFromInterfaces:
         # 伪装，隐藏UA和IP
         ip_address, ua = disguise.Disguise().get_one_IP_UA()
         header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'http://' + ip_address['ip_address']}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    ip_address["ip_address"])}
 
         return self.get_interface_content(stock_id, header, proxy, indicator)
 
