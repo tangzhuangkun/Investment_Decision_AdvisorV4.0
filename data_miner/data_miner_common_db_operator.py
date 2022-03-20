@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
 
 import time
 import sys
@@ -34,12 +37,10 @@ class DataMinerCommonDBOperation:
             return "0000-00-00"
 
 
-
-
-
-
-
 if __name__ == '__main__':
+    time_start = time.time()
     go = DataMinerCommonDBOperation()
-    last_trade_day = go.get_the_last_trading_date("2001-05-06")
+    last_trade_day = go.get_the_last_trading_date("2022-03-20")
     print(last_trade_day)
+    time_end = time.time()
+    print('Time Cost: ' + str(time_end - time_start))

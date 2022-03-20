@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
 
 import requests
 import time
