@@ -30,7 +30,7 @@ class Disguise:
 			# 从API获取代理IP
 			response = requests.get(
 				"https://proxy.qg.net/allocate?Key="+conf.proxyIPUsername+"&Num=1&AreaId=&DataFormat=json&DataSeparator=&Detail=1&Distinct=1",
-				timeout=1)
+				timeout=5)
 			# json格式解码
 			data_json = json.loads(response.text)
 			# 成功返回，但返回中的内容不可用
@@ -73,7 +73,7 @@ class Disguise:
 			# 从API获取代理IP
 			response = requests.get(
 				"https://proxy.qg.net/allocate?Key=" + conf.proxyIPUsername + "&Num="+str(num)+
-				"&AreaId=&DataFormat=json&DataSeparator=&Detail=1&Distinct=1",timeout=1)
+				"&AreaId=&DataFormat=json&DataSeparator=&Detail=1&Distinct=1",timeout=5)
 			# json格式解码
 			data_json = json.loads(response.text)
 			# 成功返回，但返回中的内容不可用
@@ -107,7 +107,7 @@ class Disguise:
 if __name__ == "__main__":
 	time_start = time.time()
 	go = Disguise()
-	result =go.get_multi_IP_UA(2)
+	result =go.get_multi_IP_UA(10)
 	#result = go.get_one_IP_UA()
 	print(result)
 	time_end = time.time()
