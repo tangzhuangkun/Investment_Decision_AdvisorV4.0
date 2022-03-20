@@ -5,32 +5,35 @@ import time
 import sys
 sys.path.append("..")
 import parsers.disguise as disguise
+import conf
 
 class DataCollectorCommonIndexCollector:
-    # 一些通用的，用于收集指数某些属性的方法
+    # 一些通用的，用于收集指数/股票某些属性的方法
 
     def __init__(self):
         pass
 
-    def get_index_latest_increasement_decreasement_rate(self, index_code_with_location):
-        # 获取指数最新的涨跌率
-        # index_code_with_location: 指数代码(含上市地), 必须如 sz399965，代码前面带上市地
-        # return: 最新的涨跌幅, 如 0.39% 即返回为 0.39
+    def get_index_latest_increasement_decreasement_rate(self, code_with_location):
+        '''
+        获取指数/股票最新的涨跌率
+        :param code_with_location: 指数/股票代码(含上市地), 必须如 sz399965，代码前面带上市地
+        :return: 最新的涨跌幅, 如 0.39% 即返回为 0.39
+        '''
 
         # 伪装，隐藏UA和IP
         ip_address, ua = disguise.Disguise().get_one_IP_UA()
         header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'https://' + ip_address['ip_address']}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    ip_address["ip_address"])}
 
         # 接口地址
-        # 接口返回: 指数名称，当前点数，当前价格，涨跌, 涨跌率，成交量（手），成交额（万元）, ,总市值；
+        # 接口返回: 指数名称，当前点数，当前价格，涨跌, 涨跌率，成交量（手），成交额（万元）, 总市值；
         # 接口返回如： 涨跌率, -0.86;
         # 只取 涨跌率
-        url = 'https://qt.gtimg.cn/q=s_'+index_code_with_location
+        url = 'https://qt.gtimg.cn/q=s_'+code_with_location
         content = requests.get(url, headers=header, proxies=proxy)
         content_split = content.text.split('~')
-        #return content_split
-        #return float(content_split[3])
         return decimal.Decimal(content_split[5])
 
 if __name__ == '__main__':
