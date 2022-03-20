@@ -5,12 +5,14 @@ import time
 import requests
 import json
 import threading
+import random
 
 import sys
 sys.path.append("..")
 import parsers.disguise as disguise
 import log.custom_logger as custom_logger
 import database.db_operator as db_operator
+import conf
 
 class CollectExcellentIndexFromCSIndex:
     # 从中证指数官网接口收集过去几年表现优异的指数
@@ -23,7 +25,11 @@ class CollectExcellentIndexFromCSIndex:
         # 5年年化收益率
         self.five_year_yield_rate_standard = 15
         # 最大线程数
-        self.max_thread_num = 20
+        self.max_thread_num = 15
+        # 同时获取多少个 IP和UA
+        self.IP_UA_num = 15
+        # 每个区块最多拥有多少个指数代码
+        self.max_index_codes = 50
 
 
 
@@ -37,7 +43,7 @@ class CollectExcellentIndexFromCSIndex:
         '''
 
         # 指数代码
-        index_code_set = set()
+        index_code_list = list()
 
         # 接口地址
         interface_url = "https://www.csindex.com.cn/csindex-home/index-list/query-index-item"
@@ -72,7 +78,7 @@ class CollectExcellentIndexFromCSIndex:
 
             # 存入字典中
             for index_info in data_json:
-                index_code_set.add(index_info["indexCode"])
+                index_code_list.append(index_info["indexCode"])
 
         except Exception as e:
             # 日志记录
@@ -81,7 +87,7 @@ class CollectExcellentIndexFromCSIndex:
             # 返回解析页面得到的股票指标
             return self.call_interface_to_get_all_index_code_name_from_cs_index()
 
-        return index_code_set
+        return index_code_list
 
 
     def call_interface_to_get_all_index_code_name_from_cs_index(self):
@@ -90,16 +96,17 @@ class CollectExcellentIndexFromCSIndex:
         return: 数代码的set
         '''
 
+        # 此处获取全部指数代码和名称可能存在 超时，链接出错等原因导致 获取到信息的时间过长，约20秒-40秒
+        # 代理IP存活时长一般为1分钟左右，若一口气调用太多代理IP，大概率存在代理IP已失活
+        # 此处为该脚本第一次调用 代理IP的API，且存在获取时间过长，因此仅调用1个IP和1个UA
         # 伪装，隐藏UA和IP
         ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'https://' + ip_address['ip_address']}
+        header = {"user-agent": ua['ua'], 'Connection': 'keep-alive'}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    ip_address["ip_address"])}
 
         return self.parse_interface_to_get_index_code_name_content(header, proxy)
-
-
-
-
 
     def parse_and_check_whether_an_excellent_index(self,index_code, satisfied_index_list, threadLock, same_time_threading, header, proxy):
         '''
@@ -202,10 +209,15 @@ class CollectExcellentIndexFromCSIndex:
         :return:
         '''
 
-        # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'https://' + ip_address['ip_address']}
+        # 避免短时间内请求太频繁，被中证官网屏蔽,随机睡眠某个浮点数
+        #time.sleep(random.uniform(1,2))
+        # 随机选取，伪装，隐藏UA和IP
+        pick_an_int = random.randint(0, self.IP_UA_num - 1)
+        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num*5 - 1)]['ua'], 'Connection': 'keep-alive'}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                  self.ip_address_dict_list[pick_an_int]['ip_address']),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    self.ip_address_dict_list[pick_an_int]['ip_address'])}
 
         return self.parse_and_check_whether_an_excellent_index(index_code, satisfied_index_list, threadLock, same_time_threading, header, proxy)
 
@@ -217,24 +229,36 @@ class CollectExcellentIndexFromCSIndex:
         '''
 
         # 获取所有指数的代码
-        index_code_set = self.call_interface_to_get_all_index_code_name_from_cs_index()
+        index_code_list = self.call_interface_to_get_all_index_code_name_from_cs_index()
         # 满足条件的指数
         satisfied_index_list = []
+
+        # 所有指数的代码平均分为多个区块，每份为50个元素可迭代对象list
+        generate_splitted_lists = self.split_list_into_lists_with_certain_elements(index_code_list, self.max_index_codes)
 
         # 启用线程锁
         threadLock = threading.Lock()
         # 限制线程的最大数量
         same_time_threading = threading.Semaphore(self.max_thread_num)
 
-        for index_code in index_code_set:
-            same_time_threading.acquire()
-            # 启动线程
-            threading.Thread(target=self.call_interface_to_get_single_index_past_performance,
-                                              kwargs={"index_code": index_code,
-                                                      "satisfied_index_list": satisfied_index_list,
-                                                      "threadLock": threadLock,
-                                                      "same_time_threading":same_time_threading
-                                                      }).start()
+        for splitted_list in generate_splitted_lists:
+            # 获取到的IP和UA样式
+            # 如 ([{'ip_address': '27.158.237.107:24135'}, {'ip_address': '27.151.158.219:50269'}], [{'ua': 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1464.0 Safari/537.36'}, {'ua': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0.6'}])
+            self.ip_address_dict_list, self.ua_dict_list = disguise.Disguise().get_multi_IP_UA(self.IP_UA_num)
+            for index_code in splitted_list:
+                same_time_threading.acquire()
+                # 启动线程
+                threading.Thread(target=self.call_interface_to_get_single_index_past_performance,
+                                                  kwargs={"index_code": index_code,
+                                                          "satisfied_index_list": satisfied_index_list,
+                                                          "threadLock": threadLock,
+                                                          "same_time_threading":same_time_threading
+                                                          }).start()
+
+            # 每个区块，50个指数，有10秒的时间执行，
+            # 10秒之后，如果还未成功获取数据的，可能代理IP已被网站屏蔽，未获取到数据的指数亦可放弃
+            # 10秒之后，启动下一个区块的数据抓取工作
+            time.sleep(10)
 
         return satisfied_index_list
 
@@ -304,10 +328,15 @@ class CollectExcellentIndexFromCSIndex:
         :return:
         '''
 
-        # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'https://' + ip_address['ip_address']}
+        # 避免短时间内请求太频繁，被中证官网屏蔽,随机睡眠某个浮点数
+        #time.sleep(random.uniform(1,2))
+        # 随机选取，伪装，隐藏UA和IP
+        pick_an_int = random.randint(0, self.IP_UA_num - 1)
+        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num*5 - 1)]['ua'], 'Connection': 'keep-alive'}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                  self.ip_address_dict_list[pick_an_int]['ip_address']),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    self.ip_address_dict_list[pick_an_int]['ip_address'])}
 
         return self.parse_interface_to_get_index_relative_funds(index_code, header, proxy)
 
@@ -354,6 +383,16 @@ class CollectExcellentIndexFromCSIndex:
                         msg = '将从中证官网接口获取的优异指数 ' + p_day+" "+index_code + " "+index_name+" "+' 存入数据库时错误  ' + str(e)
                         custom_logger.CustomLogger().log_writter(msg, 'error')
 
+    def split_list_into_lists_with_certain_elements(self, lt, n):
+        '''
+        将lt平均分，平均分后，每份个数为n
+        :param lt: 为一个列表
+        :param n: 平分后每份列表的的个数n
+        :return:
+        '''
+        for i in range(0, len(lt), n):
+            yield lt[i:i + n]
+
     def main(self):
         self.collect_and_save()
 
@@ -362,6 +401,7 @@ if __name__ == '__main__':
     go = CollectExcellentIndexFromCSIndex()
     go.main()
     #result = go.call_interface_to_get_all_index_code_name_from_cs_index()
+    #print(result)
     #result = go.call_interface_to_get_single_index_past_performance("399997")
     #print(result)
     #result = go.check_all_index_and_get_all_excellent_index()
