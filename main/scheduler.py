@@ -60,12 +60,10 @@ class Scheduler:
 			custom_logger.CustomLogger().log_writter(e, 'error')
 
 
-
-
 		#########  盘后(15:00-23:59)  #########
 		try:
 			# 每个交易日18：01收集交易日信息
-			scheduler.add_job(func=collect_trading_days.CollectTradingDays().save_all_trading_days_into_db,
+			scheduler.add_job(func=collect_trading_days.CollectTradingDays().main,
 							  trigger='cron',
 							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=1,
 							  id='weekdayCollectTradingDays')
