@@ -15,7 +15,6 @@ import log.custom_logger as custom_logger
 import data_miner.data_miner_common_target_index_operator as target_index_operator
 import database.db_operator as db_operator
 import data_collector.collector_tool_to_distinguish_stock_market as collector_tool_to_distinguish_stock_market
-import conf
 
 
 class CollectIndexWeightFromCNIndexInterface:
@@ -123,11 +122,8 @@ class CollectIndexWeightFromCNIndexInterface:
         # 如 ( '2021-09-24', [['600519', '贵州茅台','sh','XSHG',15.19'], ['600887', '伊利股份','sh','XSHG',10.37'], ,,,,])
 
         # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
-                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    ip_address["ip_address"])}
+        header, proxy = disguise.Disguise().assemble_header_proxy()
+
         current_month = time.strftime("%Y-%m", time.localtime())
 
         # 1. 获取「今天」
