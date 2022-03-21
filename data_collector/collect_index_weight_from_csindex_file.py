@@ -13,6 +13,7 @@ import parsers.disguise as disguise
 import data_miner.data_miner_common_target_index_operator as target_index_operator
 import log.custom_logger as custom_logger
 import database.db_operator as db_operator
+import conf
 
 class CollectIndexWeightFromCSIndexFile:
     # 从中证官网获取指数成分股及权重文件，并收集信息
@@ -132,7 +133,9 @@ class CollectIndexWeightFromCSIndexFile:
         # 伪装，隐藏UA和IP
         ip_address, ua = disguise.Disguise().get_one_IP_UA()
         header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {'http': 'http://' + ip_address['ip_address']}
+        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
+                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+                                                    ip_address["ip_address"])}
 
         return self.download_index_weight_file(index_code, index_name, header, proxy, threadLock)
 
