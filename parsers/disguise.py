@@ -55,8 +55,20 @@ class Disguise:
 		ua = db_operator.DBOperator().select_one('parser_component',ua_sql)
 		
 		return ip_address,ua
+
+	def assemble_header_proxy(self):
+		'''
+		组装头文件和代理, 可直接用于各个网站的接口请求
+		:return:
+		返回 如 {'user-agent': 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1467.0 Safari/537.36', 'Connection': 'keep-alive'} {'http': 'http://xxxx:xxx@183.165.245.118:58341', 'https': 'https://xxx:xxx@183.165.245.118:58341'}
+		'''
+		ip_address, ua = self.get_one_IP_UA()
+		header = {"user-agent": ua['ua'], 'Connection': 'keep-alive'}
+		proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
+				 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
+													ip_address["ip_address"])}
 		
-		
+		return header,proxy
 		
 	def get_multi_IP_UA(self,num):
 		'''
@@ -107,9 +119,11 @@ class Disguise:
 if __name__ == "__main__":
 	time_start = time.time()
 	go = Disguise()
-	result =go.get_multi_IP_UA(10)
+	header, proxy = go.assemble_header_proxy()
+	print(header,proxy)
+	#result =go.get_multi_IP_UA(10)
 	#result = go.get_one_IP_UA()
-	print(result)
+	#print(result)
 	time_end = time.time()
 	print('time:')
 	print(time_end - time_start)
