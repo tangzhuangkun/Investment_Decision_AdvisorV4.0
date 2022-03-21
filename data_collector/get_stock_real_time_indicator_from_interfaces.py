@@ -9,7 +9,6 @@ import sys
 sys.path.append("..")
 import parsers.disguise as disguise
 import log.custom_logger as custom_logger
-import conf
 
 class GetStockRealTimeIndicatorFromInterfaces:
     # 从腾讯接口获取实时估值数据
@@ -103,11 +102,7 @@ class GetStockRealTimeIndicatorFromInterfaces:
         # 返回： 获取的实时的股票滚动市盈率 格式如 32.74
 
         # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
-                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    ip_address["ip_address"])}
+        header, proxy = disguise.Disguise().assemble_header_proxy()
 
         return self.get_interface_content(stock_id, header, proxy, indicator)
 
