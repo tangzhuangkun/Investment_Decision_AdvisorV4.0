@@ -27,8 +27,8 @@ class CollectExcellentIndexFromCNIndex:
         self.five_year_yield_rate_standard = 15
         # 最大线程数
         self.max_thread_num = 20
-        # 同时获取多少个 IP和UA
-        self.IP_UA_num = 15
+        # 同时获取x个IP和5xUA
+        self.IP_UA_num = 30
         # 获取到的IP和UA样式
         # 如 ([{'ip_address': '27.158.237.107:24135'}, {'ip_address': '27.151.158.219:50269'}], [{'ua': 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1464.0 Safari/537.36'}, {'ua': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0.6'}])
         self.ip_address_dict_list, self.ua_dict_list = disguise.Disguise().get_multi_IP_UA(self.IP_UA_num)
@@ -87,7 +87,7 @@ class CollectExcellentIndexFromCNIndex:
 
         # 随机选取，伪装，隐藏UA和IP
         pick_an_int = random.randint(0,self.IP_UA_num-1)
-        header = {"user-agent": self.ua_dict_list[random.randint(0,self.IP_UA_num-1)]['ua'], 'Connection': 'close'}
+        header = {"user-agent": self.ua_dict_list[random.randint(0,self.IP_UA_num*5-1)]['ua'], 'Connection': 'close'}
         proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
                                                   self.ip_address_dict_list[pick_an_int]['ip_address']),
                  "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
@@ -165,7 +165,7 @@ class CollectExcellentIndexFromCNIndex:
 
         # 随机选取，伪装，隐藏UA和IP
         pick_an_int = random.randint(0, self.IP_UA_num - 1)
-        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num - 1)]['ua'], 'Connection': 'close'}
+        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num*5- 1)]['ua'], 'Connection': 'close'}
         proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
                                                   self.ip_address_dict_list[pick_an_int]['ip_address']),
                  "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
@@ -276,7 +276,7 @@ class CollectExcellentIndexFromCNIndex:
 
         # 随机选取，伪装，隐藏UA和IP
         pick_an_int = random.randint(0, self.IP_UA_num - 1)
-        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num - 1)]['ua'], 'Connection': 'close'}
+        header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num*5- 1)]['ua'], 'Connection': 'close'}
         proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
                                                   self.ip_address_dict_list[pick_an_int]['ip_address']),
                  "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
