@@ -37,12 +37,7 @@ class CollectCHNGovBondsRates:
         requests.packages.urllib3.disable_warnings()
 
         # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        # proxy = {'http': 'http://' + ip_address['ip_address']}
-        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
-                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    ip_address["ip_address"])}
+        header, proxy = disguise.Disguise().assemble_header_proxy()
 
         # 得到页面的信息
         raw_page = requests.post(bonds_interface_address, headers=header, proxies=proxy, verify=False, stream=False,
