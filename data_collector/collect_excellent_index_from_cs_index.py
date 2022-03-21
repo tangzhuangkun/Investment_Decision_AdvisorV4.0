@@ -26,10 +26,10 @@ class CollectExcellentIndexFromCSIndex:
         # 5年年化收益率
         self.five_year_yield_rate_standard = 15
         # 最大线程数
-        self.max_thread_num = 15
-        # 同时获取多少个 IP和UA
-        self.IP_UA_num = 15
-        # 每个区块最多拥有多少个指数代码
+        self.max_thread_num = 18
+        # 同时获取x个IP和5x个UA
+        self.IP_UA_num = 20
+        # 将中证所有指数代码分成多个区块，每个区块最多拥有多少个指数代码
         self.max_index_codes = 50
 
 
@@ -73,7 +73,7 @@ class CollectExcellentIndexFromCSIndex:
             requests.packages.urllib3.disable_warnings()
             # 得到页面的信息
             raw_page = requests.post(interface_url, headers=header, proxies=proxy, verify=False, stream=False,json=body,
-                                    timeout=10).text
+                                    timeout=5).text
             # 转换成字典数据
             data_json = json.loads(raw_page)["data"]
 
@@ -101,11 +101,7 @@ class CollectExcellentIndexFromCSIndex:
         # 代理IP存活时长一般为1分钟左右，若一口气调用太多代理IP，大概率存在代理IP已失活
         # 此处为该脚本第一次调用 代理IP的API，且存在获取时间过长，因此仅调用1个IP和1个UA
         # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'keep-alive'}
-        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
-                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    ip_address["ip_address"])}
+        header, proxy = disguise.Disguise().assemble_header_proxy()
 
         return self.parse_interface_to_get_index_code_name_content(header, proxy)
 
@@ -140,7 +136,7 @@ class CollectExcellentIndexFromCSIndex:
             requests.packages.urllib3.disable_warnings()
             # 得到页面的信息
             raw_page = requests.get(interface_url, headers=header, proxies=proxy, verify=False, stream=False,
-                                    timeout=10).text
+                                    timeout=5).text
 
             # 转换成字典数据
             raw_data = json.loads(raw_page)
@@ -210,8 +206,6 @@ class CollectExcellentIndexFromCSIndex:
         :return:
         '''
 
-        # 避免短时间内请求太频繁，被中证官网屏蔽,随机睡眠某个浮点数
-        #time.sleep(random.uniform(1,2))
         # 随机选取，伪装，隐藏UA和IP
         pick_an_int = random.randint(0, self.IP_UA_num - 1)
         header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num*5 - 1)]['ua'], 'Connection': 'keep-alive'}
@@ -290,7 +284,7 @@ class CollectExcellentIndexFromCSIndex:
             requests.packages.urllib3.disable_warnings()
             # 得到页面的信息
             raw_page = requests.get(interface_url, headers=header, proxies=proxy, verify=False, stream=False,
-                                    timeout=10).text
+                                    timeout=5).text
             # 转换成字典数据
             raw_data = json.loads(raw_page)
 
@@ -329,8 +323,6 @@ class CollectExcellentIndexFromCSIndex:
         :return:
         '''
 
-        # 避免短时间内请求太频繁，被中证官网屏蔽,随机睡眠某个浮点数
-        #time.sleep(random.uniform(1,2))
         # 随机选取，伪装，隐藏UA和IP
         pick_an_int = random.randint(0, self.IP_UA_num - 1)
         header = {"user-agent": self.ua_dict_list[random.randint(0, self.IP_UA_num*5 - 1)]['ua'], 'Connection': 'keep-alive'}
