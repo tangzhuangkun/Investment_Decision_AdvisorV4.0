@@ -14,7 +14,6 @@ import parsers.disguise as disguise
 import log.custom_logger as custom_logger
 import database.db_operator as db_operator
 import data_miner.data_miner_common_target_index_operator as target_index_operator
-import conf
 
 
 class CollectCSIndexTop10StocksWeightDaily:
@@ -135,19 +134,7 @@ class CollectCSIndexTop10StocksWeightDaily:
         # 如 ( '2021-09-24', [['600809', '山西汾酒', 'sh','16.766190846153634'], ['600519', '贵州茅台', 'sh','13.277568906087126'],,,,,])
 
         # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'],
-                  "Cookie": "Hm_lvt_12373533b632515a7c0ccd65e7fc5835=1632124825,1632124985,1632125584,1632555621; Hm_lpvt_12373533b632515a7c0ccd65e7fc5835=1632839289; Hm_lvt_41afd32af5fa51d4961a2e2a06989a9d=1633618502; Hm_lpvt_41afd32af5fa51d4961a2e2a06989a9d=1633704814; acw_tc=781bad2316469228105796026e29f0a6e550051bfe50b66439d469fb286cd0; zg_did=%7B%22did%22%3A%20%2217c9e6a4f3e9be-0cb64254ff0be1-113e6756-384000-17c9e6a4f3f894%22%7D; zg_6df0ba28cbd846a799ab8f527e8cc62b=%7B%22sid%22%3A%201646922811125%2C%22updated%22%3A%201646922889835%2C%22info%22%3A%201646837295791%2C%22superProperty%22%3A%20%22%7B%5C%22%E5%BA%94%E7%94%A8%E5%90%8D%E7%A7%B0%5C%22%3A%20%5C%22%E4%B8%AD%E8%AF%81%E6%8C%87%E6%95%B0%E5%AE%98%E7%BD%91%5C%22%7D%22%2C%22platform%22%3A%20%22%7B%7D%22%2C%22utm%22%3A%20%22%7B%7D%22%2C%22referrerDomain%22%3A%20%22%22%2C%22landHref%22%3A%20%22https%3A%2F%2Fwww.csindex.com.cn%2Fzh-CN%2Findices%2Findex-detail%2F"+index_id+"%23%2Findices%2Ffamily%2Fdetail%3FindexCode%3D"+index_id+"%22%2C%22zs%22%3A%200%2C%22sc%22%3A%200%2C%22firstScreen%22%3A%201646922811125%7D",
-                  "referer": "https://www.csindex.com.cn/zh-CN/indices/index-detail/"+index_id,
-                  "Connection": "keep-alive",
-                  "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                  "Accept-Encoding": "gzip, deflate, br",
-                  "Accept": "application/json, text/plain, */*",
-                  "Host": "www.csindex.com.cn"}
-        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
-                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    ip_address["ip_address"])}
-
+        header, proxy = disguise.Disguise().assemble_header_proxy()
         return self.parse_page_content(index_id, header, proxy)
 
     def check_if_saved_before(self, index_code, p_day, stocks_detail_info_list):
