@@ -5,7 +5,6 @@ import time
 import sys
 sys.path.append("..")
 import parsers.disguise as disguise
-import conf
 
 class DataCollectorCommonIndexCollector:
     # 一些通用的，用于收集指数/股票某些属性的方法
@@ -21,11 +20,7 @@ class DataCollectorCommonIndexCollector:
         '''
 
         # 伪装，隐藏UA和IP
-        ip_address, ua = disguise.Disguise().get_one_IP_UA()
-        header = {"user-agent": ua['ua'], 'Connection': 'close'}
-        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword, ip_address["ip_address"]),
-                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    ip_address["ip_address"])}
+        header, proxy = disguise.Disguise().assemble_header_proxy()
 
         # 接口地址
         # 接口返回: 指数名称，当前点数，当前价格，涨跌, 涨跌率，成交量（手），成交额（万元）, 总市值；
