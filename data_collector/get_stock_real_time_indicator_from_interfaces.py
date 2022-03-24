@@ -19,6 +19,14 @@ class GetStockRealTimeIndicatorFromInterfaces:
     def __init__(self):
         pass
 
+    # https://data.eastmoney.com/gzfx/detail/600519.html
+    # 拥有A股股票，估值指标， 市净率，peg，股息率，市净率，实现率，市销率
+
+    # http://quote.eastmoney.com/hk/00700.html
+    # 港股，估值指标，市盈率TTM	市净率	市销率TTM	市现率TTM	净资产收益率TTM	股息率
+
+    # http: // quote.eastmoney.com / sh600519.html
+    # A股股票ROE
 
     def get_interface_content(self, stock_id, header, proxy, indicator):
         # 解析接口信息
@@ -102,7 +110,12 @@ class GetStockRealTimeIndicatorFromInterfaces:
         # 返回： 获取的实时的股票滚动市盈率 格式如 32.74
 
         # 伪装，隐藏UA和IP
-        header, proxy = disguise.Disguise().assemble_header_proxy()
+        #header, proxy = disguise.Disguise().assemble_header_proxy()
+
+        # 暂时写死，该API对IP要求不高
+        # 不调用IP代理的API来获取新的IP，可节约代理IP账户中的资源
+        header = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE'}
+        proxy =  {"http": 'http://118.190.244.234:3128', "https": 'https://118.190.244.234:3128'}
 
         return self.get_interface_content(stock_id, header, proxy, indicator)
 
@@ -111,7 +124,7 @@ class GetStockRealTimeIndicatorFromInterfaces:
 if __name__ == '__main__':
     time_start = time.time()
     go = GetStockRealTimeIndicatorFromInterfaces()
-    result = go.get_single_stock_real_time_indicator("sh600519","dr_ttm")
+    result = go.get_single_stock_real_time_indicator("sh600519","pe_ttm")
     print(result)
     time_end = time.time()
     print('Time Cost: ' + str(time_end - time_start))
