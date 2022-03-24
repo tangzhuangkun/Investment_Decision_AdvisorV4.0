@@ -28,14 +28,15 @@ class GetStockRealTimeIndicatorFromInterfaces:
     # http: // quote.eastmoney.com / sh600519.html
     # A股股票ROE
 
-    def get_interface_content(self, stock_id, header, proxy, indicator):
-        # 解析接口信息
-        # stock_id: 股票代码（2位上市地+6位数字， 如 sz000596）
-        # page_address，地址
-        # header，伪装的UA
-        # proxy，伪装的IP
-        # indicator, 需要抓取的指标，如 pe_ttm,市盈率TTM；pb,市净率，dr_ttm,滚动股息率 等
-        # 返回 股票滚动市盈率
+    def get_single_stock_real_time_indicator(self, stock_id, header, proxy, indicator):
+        '''
+        解析接口信息,从接口获取实时的股票指标
+        :param stock_id: 股票代码（2位上市地+6位数字， 如 sz000596）
+        :param header: 伪装的UA
+        :param proxy: 伪装的IP
+        :param indicator: 需要抓取的指标，如 pe_ttm,市盈率TTM；pb,市净率，dr_ttm,滚动股息率 等
+        :return: 获取的实时的股票滚动市盈率 格式如 32.74
+        '''
 
         # 地址模板
         interface_address = 'https://qt.gtimg.cn/q=' + stock_id
@@ -76,7 +77,7 @@ class GetStockRealTimeIndicatorFromInterfaces:
             msg = "Collected stock real time " + indicator + " from " + interface_address + '  ' + "ReadTimeout"
             custom_logger.CustomLogger().log_writter(msg, lev='warning')
             # 返回解析页面得到的股票指标
-            return self.get_single_stock_real_time_indicator(stock_id, indicator)
+            return self.get_single_stock_real_time_indicator(stock_id, header, proxy, indicator)
 
         # 如果连接请求超时，重新在执行一遍解析页面
         except requests.exceptions.ConnectTimeout:
@@ -84,7 +85,7 @@ class GetStockRealTimeIndicatorFromInterfaces:
             msg = "Collected stock real time " + indicator + " from " + interface_address + '  ' + "ConnectTimeout"
             custom_logger.CustomLogger().log_writter(msg, lev='warning')
             # 返回解析页面得到的股票指标
-            return self.get_single_stock_real_time_indicator(stock_id, indicator)
+            return self.get_single_stock_real_time_indicator(stock_id, header, proxy, indicator)
 
         # 如果请求超时，重新在执行一遍解析页面
         except requests.exceptions.Timeout:
@@ -92,32 +93,35 @@ class GetStockRealTimeIndicatorFromInterfaces:
             msg = "Collected stock real time " + indicator + " from " + interface_address + '  ' + "Timeout"
             custom_logger.CustomLogger().log_writter(msg, lev='warning')
             # 返回解析页面得到的股票指标
-            return self.get_single_stock_real_time_indicator(stock_id, indicator)
+            return self.get_single_stock_real_time_indicator(stock_id, header, proxy, indicator)
 
         except Exception as e:
             # 日志记录
             msg = interface_address + str(e)
             custom_logger.CustomLogger().log_writter(msg, lev='warning')
             # 返回解析页面得到的股票指标
-            return self.get_single_stock_real_time_indicator(stock_id, indicator)
+            return self.get_single_stock_real_time_indicator(stock_id, header, proxy, indicator)
 
 
-
-    def get_single_stock_real_time_indicator(self, stock_id, indicator):
+    '''
+        def get_single_stock_real_time_indicator(self, stock_id, indicator):
         # 从接口获取实时的股票指标
         # stock_id: 股票代码（2位上市地+6位数字， 如 sz000596）
         # indicator, 需要抓取的指标，如 pe_ttm,市盈率TTM；pb,市净率，dr_ttm,滚动股息率 等
         # 返回： 获取的实时的股票滚动市盈率 格式如 32.74
 
         # 伪装，隐藏UA和IP
-        #header, proxy = disguise.Disguise().assemble_header_proxy()
+        header, proxy = disguise.Disguise().assemble_header_proxy()
 
         # 暂时写死，该API对IP要求不高
         # 不调用IP代理的API来获取新的IP，可节约代理IP账户中的资源
-        header = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE'}
-        proxy =  {"http": 'http://118.190.244.234:3128', "https": 'https://118.190.244.234:3128'}
+        #header = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE'}
+        #proxy =  {"http": 'http://118.190.244.234:3128', "https": 'https://118.190.244.234:3128'}
 
         return self.get_interface_content(stock_id, header, proxy, indicator)
+    
+    '''
+
 
 
 
