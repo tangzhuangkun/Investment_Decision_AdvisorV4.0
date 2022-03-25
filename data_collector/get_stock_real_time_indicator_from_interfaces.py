@@ -19,14 +19,6 @@ class GetStockRealTimeIndicatorFromInterfaces:
     def __init__(self):
         pass
 
-    # https://data.eastmoney.com/gzfx/detail/600519.html
-    # 拥有A股股票，估值指标， 市净率，peg，股息率，市净率，实现率，市销率
-
-    # http://quote.eastmoney.com/hk/00700.html
-    # 港股，估值指标，市盈率TTM	市净率	市销率TTM	市现率TTM	净资产收益率TTM	股息率
-
-    # http: // quote.eastmoney.com / sh600519.html
-    # A股股票ROE
 
     def get_single_stock_real_time_indicator(self, stock_id, indicator):
         '''
