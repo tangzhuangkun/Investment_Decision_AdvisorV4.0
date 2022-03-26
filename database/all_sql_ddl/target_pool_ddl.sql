@@ -14,8 +14,11 @@ CREATE TABLE IF NOT EXISTS `index_target`(
 	`buy_and_hold_strategy`  VARCHAR(100) DEFAULT NULL COMMENT '买入持有策略',
 	`sell_out_strategy` VARCHAR(100) DEFAULT NULL COMMENT '卖出策略',
 	`monitoring_frequency` VARCHAR(20) DEFAULT 'daily' COMMENT '监控频率，secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically',
+	`holder` VARCHAR(100) DEFAULT 'zhuangkun' COMMENT '标的持有人',
+	`status` VARCHAR(100) DEFAULT 'active' COMMENT '标的监控策略状态，active，suspend，inactive',
 	`p_day` DATE NOT NULL COMMENT '提交的日期',
 	`submission_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
+	UNIQUE INDEX (index_code, valuation_method, monitoring_frequency, holder),
 	PRIMARY KEY ( `id` )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 COMMENT '跟踪指数及跟踪策略标的池';
@@ -56,8 +59,11 @@ CREATE TABLE IF NOT EXISTS `stock_target`(
 	`buy_and_hold_strategy`  VARCHAR(100) DEFAULT NULL COMMENT '买入持有策略',
 	`sell_out_strategy` VARCHAR(100) DEFAULT NULL COMMENT '卖出策略',
 	`monitoring_frequency` VARCHAR(20) DEFAULT 'minutely' COMMENT '监控频率，secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically',
+	`holder` VARCHAR(100) DEFAULT 'zhuangkun' COMMENT '标的持有人',
+	`status` VARCHAR(100) DEFAULT 'active' COMMENT '标的监控策略状态，active，suspend，inactive',
 	`p_day` DATE NOT NULL COMMENT '提交的日期',
 	`submission_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
+	UNIQUE INDEX (stock_code, valuation_method, monitoring_frequency, holder),
 	PRIMARY KEY ( `id` )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 COMMENT '跟踪股票及跟踪策略标的池';
