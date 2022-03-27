@@ -5,11 +5,14 @@
 # 通过接口，网络与该决策系统互动
 
 import sys
+
 sys.path.append('..')
 import web_service.web_service_impl as web_service_impl
 import vo.operate_target_vo as operate_target_vo
-from flask import Flask, request  # 引入request对象
+from flask import Flask, request, jsonify  # 引入request对象
+
 app = Flask(__name__)
+
 
 @app.route("/operate_target", methods=["POST"])
 def operate_target():
@@ -20,30 +23,43 @@ def operate_target():
 
     # 获取请求参数
     # 标的类型，如 index, stock
-    target = request.args.get("target")
+    target_type = request.args.get("target_type")
     # 操作，如 create, update
     operation = request.args.get("operation")
     # 标的代码，如 指数代码 399997，股票代码 600519
-    target_code = request.args.get("code")
+    target_code = request.args.get("target_code")
+    # 跟踪标的名称，如 中证白酒指数, 万科
+    target_name = request.args.get("target_name")
+    # 指数开发公司，如 中证，国证
+    index_company = request.args.get("index_company")
     # 标的上市地, 如 sz, sh, hk
     exchange_location = request.args.get("exchange_location")
     # 估值策略, 如 pb,pe,ps
-    valuation_method = request.args.get("method")
-    # 监控频率, secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically
-    monitoring_frequency = request.args.get("frequency")
-    # 标的持有人
-    holder = request.args.get("holder")
-    # 标的策略状态，如 active，suspend，inactive
-    status = request.args.get("status")
-
+    valuation_method = request.args.get("valuation_method")
+    # 估值触发绝对值值临界点，含等于，看指标具体该大于等于还是小于等于，如 pb估值时，0.9
+    trigger_value = request.args.get("trigger_value")
+    # 估值触发历史百分比临界点，含等于，看指标具体该大于等于还是小于等于，如 10，即10%位置
+    trigger_percent = request.args.get("trigger_percent")
+    # 买入持有策略
+    buy_and_hold_strategy = request.args.get("buy_and_hold_strategy")
+    # 卖出策略
+    sell_out_strategy = request.args.get("sell_out_strategy")
+    # 当前是否持有,1为持有，0不持有, 默认0
+    hold_or_not = request.args.get("hold_or_not",0)
+    # 监控频率, secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically, 默认 minutely
+    monitoring_frequency = request.args.get("monitoring_frequency","minutely")
+    # 标的持有人, 默认 zhuangkun
+    holder = request.args.get("holder","zhuangkun")
+    # 标的策略状态，如 active，suspend，inactive, 默认 active
+    status = request.args.get("status", "active")
 
     # 包装成一个对象
-    params = operate_target_vo.OperateTargetVo(target, operation, target_code, valuation_method, monitoring_frequency,
-                                               holder, status, exchange_location)
+    params = operate_target_vo.OperateTargetVo(target_type, operation, target_code, target_name, index_company,
+                                               valuation_method, trigger_value, trigger_percent, buy_and_hold_strategy,
+                                               sell_out_strategy, monitoring_frequency, holder, status,
+                                               exchange_location, hold_or_not)
     # 实现 更新，创建
-    web_service_impl.WebServericeImpl().operate_target_impl(params)
-
-    return 'Hello World!'
+    return jsonify(web_service_impl.WebServericeImpl().operate_target_impl(params))
 
 
 if __name__ == '__main__':

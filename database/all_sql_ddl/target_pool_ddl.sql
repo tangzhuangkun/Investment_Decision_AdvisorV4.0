@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS `investment_target`(
     `id` MEDIUMINT NOT NULL AUTO_INCREMENT,
     `target_type`  VARCHAR(30) NOT NULL COMMENT '跟踪标的类型，如 指数-index，股票-stock',
 	`target_code`  VARCHAR(30)  NOT NULL COMMENT '跟踪标的代码，如 399997',
-	`target_name`  VARCHAR(50) COMMENT '跟踪标的名称，如 中证白酒指数',
-	`index_company`  VARCHAR(20) DEFAULT NULL COMMENT '指数开发公司',
+	`target_name`  VARCHAR(50) NOT NULL COMMENT '跟踪标的名称，如 中证白酒指数',
+	`index_company`  VARCHAR(20) DEFAULT NULL COMMENT '指数开发公司, 如中证，国证',
     `exchange_location`  VARCHAR(10) NOT NULL COMMENT '标的上市地1，如 sh,sz',
     `exchange_location_mic`  VARCHAR(10) NOT NULL COMMENT '标的上市地MIC，如 XSHG, XSHE 等',
 	`hold_or_not`  tinyint(1) DEFAULT 0 COMMENT '当前是否持有,1为持有，0不持有',
@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS `investment_target`(
 	`monitoring_frequency` VARCHAR(20) DEFAULT 'minutely' COMMENT '监控频率，secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically',
 	`holder` VARCHAR(100) DEFAULT 'zhuangkun' COMMENT '标的持有人',
 	`status` VARCHAR(100) DEFAULT 'active' COMMENT '标的监控策略状态，active，suspend，inactive',
-	`p_day` DATE NOT NULL COMMENT '提交的日期',
+	`p_day` DATE DEFAULT NULL COMMENT '提交的日期',
 	`submission_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
+	`update_time` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 	UNIQUE INDEX (target_type, target_code, exchange_location_mic, valuation_method, monitoring_frequency, holder),
 	PRIMARY KEY ( `id` )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
