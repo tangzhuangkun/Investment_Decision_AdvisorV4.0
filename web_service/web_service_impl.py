@@ -8,6 +8,9 @@ import log.custom_logger as custom_logger
 import database.db_operator as db_operator
 
 class WebServericeImpl:
+    '''
+    通过接口，网络与该决策系统互动的实现
+    '''
 
     def __init__(self):
         pass
@@ -70,8 +73,7 @@ class WebServericeImpl:
         else:
             return False
 
-    # todo
-    def _is_a_num(self,num_str):
+    def __is_a_num(self,num_str):
         '''
         检查一个数是否为数字，包含整数，小数
         :param num_str:输入一个为str
@@ -79,11 +81,12 @@ class WebServericeImpl:
         '''
         # 清除前后空格
         num = num_str.strip()
-        print(type(eval(num)))
-        if (type(eval(num))=="float" or type(eval(num))=="int"):
+        try:
+            float(num)
             return True
-        else:
-            return False
+        except ValueError:
+            pass
+        return False
 
     def operate_target_impl(self,operation_target_params):
         '''
@@ -138,17 +141,14 @@ class WebServericeImpl:
             if (operation_target_params.trigger_value == None):
                 return {"msg": "估值触发绝对值值临界点参数trigger_value为空", "code": 400, "status": "Failure"}
             # 估值触发绝对值值临界点是否为数字
-            if (not operation_target_params.trigger_value.isdigit()):
-                print(operation_target_params.trigger_value)
-                print(type(operation_target_params.trigger_value))
-                print(not operation_target_params.trigger_value.isdigit())
+            if (not self.__is_a_num(operation_target_params.trigger_value)):
                 return {"msg": "估值触发绝对值值临界点参数trigger_value不是数值", "code": 400, "status": "Failure"}
 
             # 估值触发历史百分比临界点是否为空
             if (operation_target_params.trigger_percent == None):
                 return {"msg": "指数开发公司参数trigger_percent为空", "code": 400, "status": "Failure"}
             # 估值触发历史百分比临界点是否为数字
-            if (not operation_target_params.trigger_percent.isdigit()):
+            if (not self.__is_a_num(operation_target_params.trigger_percent)):
                 return {"msg": "指数开发公司参数trigger_percent不是数值", "code": 400, "status": "Failure"}
 
 
@@ -178,12 +178,13 @@ class WebServericeImpl:
                                    operation_target_params.sell_out_strategy, operation_target_params.monitoring_frequency,
                                    operation_target_params.holder,operation_target_params.status)
 
-
                 is_inserted_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", inserting_sql)
+                # 如果插入成功
                 if(is_inserted_successfully_dict.get("status")):
                     # 日志记录
-                    msg = '创建新的指数标的-'+operation_target_params.target_name+'成功 '
+                    msg = '创建新的指数标的-'+operation_target_params.target_name+'-成功'
                     return {"msg": msg, "code":200, "status":"Success"}
+                # 如果插入失败
                 else:
                     # 日志记录
                     msg = '创建新的指数标的失败 ' + is_inserted_successfully_dict.get("msg")
@@ -191,30 +192,32 @@ class WebServericeImpl:
                     return {"msg": msg, "code":400, "status":"Failure"}
 
             elif(operation_target_params.target_type == "stock"):
-                try:
-                    # 插入的SQL
-                    inserting_sql = """INSERT INTO investment_target(target_type, target_code, target_name, 
-                    exchange_location, exchange_location_mic, hold_or_not, valuation_method, trigger_value, 
-                    trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status) 
-                                        VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
-                                    % (operation_target_params.target_type, operation_target_params.target_code,
-                                       operation_target_params.target_name,
-                                       operation_target_params.exchange_location, exchange_location_mic,
-                                       operation_target_params.hold_or_not,
-                                       operation_target_params.valuation_method, operation_target_params.trigger_value,
-                                       operation_target_params.trigger_percent,
-                                       operation_target_params.buy_and_hold_strategy,
-                                       operation_target_params.sell_out_strategy,
-                                       operation_target_params.monitoring_frequency,
-                                       operation_target_params.holder, operation_target_params.status)
-                    db_operator.DBOperator().operate("insert", "target_pool", inserting_sql)
-                    # 日志记录
-                    msg = '创建新的股票标的-' + operation_target_params.target_name + '成功 '
-                    return {"msg": msg, "code": 200, "status": "Success"}
+                # 插入的SQL
+                inserting_sql = """INSERT INTO investment_target(target_type, target_code, target_name, 
+                exchange_location, exchange_location_mic, hold_or_not, valuation_method, trigger_value, 
+                trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status) 
+                                    VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
+                                % (operation_target_params.target_type, operation_target_params.target_code,
+                                   operation_target_params.target_name,
+                                   operation_target_params.exchange_location, exchange_location_mic,
+                                   operation_target_params.hold_or_not,
+                                   operation_target_params.valuation_method, operation_target_params.trigger_value,
+                                   operation_target_params.trigger_percent,
+                                   operation_target_params.buy_and_hold_strategy,
+                                   operation_target_params.sell_out_strategy,
+                                   operation_target_params.monitoring_frequency,
+                                   operation_target_params.holder, operation_target_params.status)
 
-                except Exception as e:
+                is_inserted_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", inserting_sql)
+                # 如果插入成功
+                if (is_inserted_successfully_dict.get("status")):
                     # 日志记录
-                    msg = '创建新的股票标的失败 ' + str(e)
+                    msg = '创建新的股票标的-' + operation_target_params.target_name + '-成功'
+                    return {"msg": msg, "code": 200, "status": "Success"}
+                # 如果插入失败
+                else:
+                    # 日志记录
+                    msg = '创建新的股票标的'+ operation_target_params.target_name + '失败 ' + is_inserted_successfully_dict.get("msg")
                     custom_logger.CustomLogger().log_writter(msg, 'error')
                     return {"msg": msg, "code": 400, "status": "Failure"}
 
@@ -227,5 +230,3 @@ class WebServericeImpl:
 
 if __name__ == '__main__':
     go = WebServericeImpl()
-    result = go._is_a_num("4.5")
-    print(result)
