@@ -14,7 +14,7 @@ from flask import Flask, request, jsonify  # 引入request对象
 app = Flask(__name__)
 
 
-@app.route("/operate_target", methods=["POST"])
+@app.route("/operate_investment_target", methods=["POST"])
 def operate_target():
     '''
     对标的物进行操作，支持更新，创建

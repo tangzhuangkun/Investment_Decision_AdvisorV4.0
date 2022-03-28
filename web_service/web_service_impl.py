@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # author: Tang Zhuangkun
 
+import time
+
 import sys
 sys.path.append("..")
 import log.custom_logger as custom_logger
@@ -94,30 +96,54 @@ class WebServericeImpl:
         :param operation_target_params.operation: 操作，如 create, update, 必选
         :param operation_target_params.target_type: 标的类型，如 index, stock，必选
         :param operation_target_params.target_code: 标的代码，如 指数代码 399997，股票代码 600519，必选
+        :param operation_target_params.exchange_location: 标的上市地, 如 sz, sh, hk， 必选
+        :param operation_target_params.valuation_method: 估值策略, 如 pb,pe,ps， 必选
+        :param operation_target_params.monitoring_frequency: 监控频率, secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically， 必选
+        :param operation_target_params.holder: 标的持有人，默认 zhuangkun, 必选
+
         :param operation_target_params.target_name: 跟踪标的名称，如 中证白酒指数, 万科， 创建时-必选，更新时-可选
-        :param operation_target_params.exchange_location: 标的上市地, 如 sz, sh, hk， 创建时-必选，更新时-可选
-        :param operation_target_params.valuation_method: 估值策略, 如 pb,pe,ps， 创建时-必选，更新时-可选
         :param operation_target_params.trigger_value: 估值触发绝对值值临界点，含等于，看指标具体该大于等于还是小于等于，如 pb估值时，0.95, 创建时-必选，更新时-可选
         :param operation_target_params.trigger_percent: 估值触发历史百分比临界点，含等于，看指标具体该大于等于还是小于等于，如 10，即10%位置 创建时-必选，更新时-可选
-        :param operation_target_params.monitoring_frequency: 监控频率, secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically， 创建时-必选，更新时-可选
         :param operation_target_params.index_company: 指数开发公司, 如中证，国证， 创建指数标的时-必选，更新指数标的时-可选
         :param operation_target_params.buy_and_hold_strategy: 买入持有策略, 创建时-可选，更新时-可选
         :param operation_target_params.sell_out_strategy: 卖出策略, 创建时-可选，更新时-可选
-        :param operation_target_params.holder: 标的持有人，创建时，默认 zhuangkun-可选，更新时-可选
         :param operation_target_params.status: 标的策略状态，如 active，suspend，inactive  创建时，默认active-可选，更新时-可选
         :param operation_target_params.hold_or_not：当前是否持有,1为持有，0不持有  创建时，默认0-可选，更新时-可选
         :return:
         '''
 
+        # 获取当前日期
+        today = time.strftime("%Y-%m-%d", time.localtime())
+
         # 检查必选参数是否有传入
+
+        # 操作是否传入正确
         if(operation_target_params.operation!="create" and operation_target_params.operation!="update" or operation_target_params.operation==None):
             return {"msg": "操作参数operation出错", "code":400, "status":"Failure"}
 
+        # 标的类型是否传入正确
         if (operation_target_params.target_type != "index" and operation_target_params.target_type != "stock" or operation_target_params.target_type == None):
             return {"msg": "标的类型参数target_type出错", "code":400, "status":"Failure"}
 
+        # 标的代码是否传入
         if (operation_target_params.target_code == None):
             return {"msg": "标的代码参数target_code出错", "code":400, "status":"Failure"}
+
+        # 检查上市地参数是否合乎规范
+        exchange_location_mic = self.__check_exchange_location_param(operation_target_params.exchange_location)
+        if (exchange_location_mic == None):
+            return {"msg": "上市地参数exchange_location出错", "code": 400, "status": "Failure"}
+
+        # 检查估值策略是否正确
+        is_valuation_method_right = self.__check_valuation_method(operation_target_params.valuation_method)
+        if (not is_valuation_method_right):
+            return {"msg": "估值策略参数valuation_method出错", "code": 400, "status": "Failure"}
+
+        # 检查监控频率是否正确
+        is_monitoring_frequency_right = self.__check_monitoring_frequency(
+            operation_target_params.monitoring_frequency)
+        if (not is_monitoring_frequency_right):
+            return {"msg": "监控频率参数monitoring_frequency出错", "code": 400, "status": "Failure"}
 
 
         # 如果是创建新标的
@@ -126,16 +152,6 @@ class WebServericeImpl:
             # 跟踪标的名称是否为空
             if (operation_target_params.target_name == None):
                 return {"msg": "标的名称参数target_name为空", "code": 400, "status": "Failure"}
-
-            # 检查上市地参数是否合乎规范
-            exchange_location_mic = self.__check_exchange_location_param(operation_target_params.exchange_location)
-            if(exchange_location_mic==None):
-                return {"msg": "上市地参数exchange_location出错", "code":400, "status":"Failure"}
-
-            # 检查估值策略是否正确
-            is_valuation_method_right = self.__check_valuation_method(operation_target_params.valuation_method)
-            if(not is_valuation_method_right):
-                return {"msg": "估值策略参数valuation_method出错", "code":400, "status":"Failure"}
 
             # 估值触发绝对值值临界点是否为空
             if (operation_target_params.trigger_value == None):
@@ -151,14 +167,6 @@ class WebServericeImpl:
             if (not self.__is_a_num(operation_target_params.trigger_percent)):
                 return {"msg": "指数开发公司参数trigger_percent不是数值", "code": 400, "status": "Failure"}
 
-
-            # 检查监控频率是否正确
-            is_monitoring_frequency_right = self.__check_monitoring_frequency(operation_target_params.monitoring_frequency)
-            if (not is_monitoring_frequency_right):
-                return {"msg": "监控频率参数monitoring_frequency出错", "code":400, "status":"Failure"}
-
-
-
             if(operation_target_params.target_type == "index"):
 
                 # 指数开发公司是否为空
@@ -168,15 +176,15 @@ class WebServericeImpl:
                 # 插入的SQL
                 inserting_sql = """INSERT INTO investment_target(target_type, target_code, target_name, 
                 index_company, exchange_location, exchange_location_mic, hold_or_not, valuation_method, trigger_value, 
-                trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status) 
-                VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
+                trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status, p_day) 
+                VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
                                 % (operation_target_params.target_type, operation_target_params.target_code,
                                    operation_target_params.target_name, operation_target_params.index_company,
                                    operation_target_params.exchange_location, exchange_location_mic,operation_target_params.hold_or_not,
                                    operation_target_params.valuation_method, operation_target_params.trigger_value,
                 operation_target_params.trigger_percent, operation_target_params.buy_and_hold_strategy ,
                                    operation_target_params.sell_out_strategy, operation_target_params.monitoring_frequency,
-                                   operation_target_params.holder,operation_target_params.status)
+                                   operation_target_params.holder,operation_target_params.status,today)
 
                 is_inserted_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", inserting_sql)
                 # 如果插入成功
@@ -187,7 +195,7 @@ class WebServericeImpl:
                 # 如果插入失败
                 else:
                     # 日志记录
-                    msg = '创建新的指数标的失败 ' + is_inserted_successfully_dict.get("msg")
+                    msg = '创建新的指数标的-'+operation_target_params.target_name+'-失败 ' + is_inserted_successfully_dict.get("msg")
                     custom_logger.CustomLogger().log_writter(msg, 'error')
                     return {"msg": msg, "code":400, "status":"Failure"}
 
@@ -195,8 +203,8 @@ class WebServericeImpl:
                 # 插入的SQL
                 inserting_sql = """INSERT INTO investment_target(target_type, target_code, target_name, 
                 exchange_location, exchange_location_mic, hold_or_not, valuation_method, trigger_value, 
-                trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status) 
-                                    VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
+                trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status, p_day) 
+                                    VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
                                 % (operation_target_params.target_type, operation_target_params.target_code,
                                    operation_target_params.target_name,
                                    operation_target_params.exchange_location, exchange_location_mic,
@@ -206,7 +214,7 @@ class WebServericeImpl:
                                    operation_target_params.buy_and_hold_strategy,
                                    operation_target_params.sell_out_strategy,
                                    operation_target_params.monitoring_frequency,
-                                   operation_target_params.holder, operation_target_params.status)
+                                   operation_target_params.holder, operation_target_params.status,today)
 
                 is_inserted_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", inserting_sql)
                 # 如果插入成功
@@ -223,10 +231,91 @@ class WebServericeImpl:
 
         # 如果是更新标的
         elif(operation_target_params.operation=="update"):
+
+            # 拼接的动态sql
+            dynamic_sql = "SET p_day = %(today)s"
+            # 待更新的参数值
+            params_dict = {"today":today}
+
+            # 如果标的名称不为空，则需要更新
+            if(operation_target_params.target_name!=None):
+                dynamic_sql += ", target_name=%(target_name)s"
+                params_dict["target_name"] = operation_target_params.target_name
+
+            # 如果估值触发绝对值值临界点不为空
+            if (operation_target_params.trigger_value != None):
+                # 估值触发绝对值值临界点是否为数字
+                # 不是数字
+                if (not self.__is_a_num(operation_target_params.trigger_value)):
+                    return {"msg": "估值触发绝对值值临界点参数trigger_value不是数值", "code": 400, "status": "Failure"}
+                # 是数字，则需要更新
+                else:
+                    dynamic_sql += ", trigger_value=%(trigger_value)s"
+                    params_dict["trigger_value"] = operation_target_params.trigger_value
+
+            # 如果估值触发历史百分比临界点不为空
+            if (operation_target_params.trigger_percent != None):
+                # 估值触发历史百分比临界点是否为数字
+                # 不是数字
+                if (not self.__is_a_num(operation_target_params.trigger_percent)):
+                    return {"msg": "估值触发绝对值值临界点参数trigger_percent不是数值", "code": 400, "status": "Failure"}
+                # 是数字，则需要更新
+                else:
+                    dynamic_sql += ", trigger_percent=%(trigger_percent)s"
+                    params_dict["trigger_percent"] = operation_target_params.trigger_percent
+
+            # 如果买入持有策略不为空，则需要更新
+            if (operation_target_params.buy_and_hold_strategy != None):
+                dynamic_sql += ", buy_and_hold_strategy=%(buy_and_hold_strategy)s"
+                params_dict["buy_and_hold_strategy"] = operation_target_params.buy_and_hold_strategy
+
+            # 如果卖出策略不为空，则需要更新
+            if (operation_target_params.sell_out_strategy != None):
+                dynamic_sql += ", sell_out_strategy=%(sell_out_strategy)s"
+                params_dict["sell_out_strategy"] = operation_target_params.sell_out_strategy
+
+            # 如果标的策略状态不为空，则需要更新
+            if (operation_target_params.status != None):
+                dynamic_sql += ", status=%(status)s"
+                params_dict["status"] = operation_target_params.status
+
+            # 如果当前是否持有不为空，则需要更新
+            if (operation_target_params.hold_or_not != None):
+                dynamic_sql += ", hold_or_not=%(hold_or_not)s"
+                params_dict["hold_or_not"] = operation_target_params.hold_or_not
+
+            # 如果是更新 指数标的
             if (operation_target_params.target_type == "index"):
-                pass
+
+                # 如果指数开发公司不为空，则需要更新
+                if (operation_target_params.index_company != None):
+                    dynamic_sql += ", index_company=%(index_company)s"
+                    params_dict["index_company"] = operation_target_params.index_company
+
+                # 加入 必传参数，跟踪标的类型， 跟踪标的代码， 标的上市地，估值方法, 监控频率, 标的持有人
+                params_dict["target_type"] = operation_target_params.target_type
+                params_dict["target_code"] = operation_target_params.target_code
+                params_dict["exchange_location"] = operation_target_params.exchange_location
+                params_dict["valuation_method"] = operation_target_params.valuation_method
+                params_dict["monitoring_frequency"] = operation_target_params.monitoring_frequency
+                params_dict["holder"] = operation_target_params.holder
+
+                updating_sql = """ UPDATE investment_target """+dynamic_sql+""" WHERE target_type=%(target_type)s AND target_code=%(target_code)s 
+                AND exchange_location=%(exchange_location)s AND valuation_method=%(valuation_method)s AND monitoring_frequency=%(monitoring_frequency)s AND holder=%(holder)s """ % params_dict
+
+                is_updated_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", updating_sql)
+                # 如果插入成功
+                if (is_updated_successfully_dict.get("status")):
+                    # 日志记录
+                    msg = '更新指数标的-' + operation_target_params.target_code + '-成功'
+                    return {"msg": msg, "code": 200, "status": "Success"}
+                # 如果插入失败
+                else:
+                    # 日志记录
+                    msg = '更新指数标的-'+operation_target_params.target_code +' 失败 '+ is_updated_successfully_dict.get("msg")
+                    custom_logger.CustomLogger().log_writter(msg, 'error')
+                    return {"msg": msg, "code": 400, "status": "Failure"}
+
+            # 如果是更新 股票标的
             elif (operation_target_params.target_type == "stock"):
                 pass
-
-if __name__ == '__main__':
-    go = WebServericeImpl()
