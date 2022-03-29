@@ -44,14 +44,14 @@ def operate_target():
     buy_and_hold_strategy = request.args.get("buy_and_hold_strategy")
     # 卖出策略
     sell_out_strategy = request.args.get("sell_out_strategy")
-    # 当前是否持有,1为持有，0不持有, 默认0
-    hold_or_not = request.args.get("hold_or_not",0)
-    # 监控频率, secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically, 默认 minutely
-    monitoring_frequency = request.args.get("monitoring_frequency","minutely")
-    # 标的持有人, 默认 zhuangkun
-    holder = request.args.get("holder","zhuangkun")
-    # 标的策略状态，如 active，suspend，inactive, 默认 active
-    status = request.args.get("status", "active")
+    # 当前是否持有,1为持有，0不持有
+    hold_or_not = request.args.get("hold_or_not")
+    # 监控频率, secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically
+    monitoring_frequency = request.args.get("monitoring_frequency")
+    # 标的持有人
+    holder = request.args.get("holder")
+    # 标的策略状态，如 active，suspend，inactive
+    status = request.args.get("status")
 
     # 包装成一个对象
     params = operate_target_vo.OperateTargetVo(target_type, operation, target_code, target_name, index_company,
