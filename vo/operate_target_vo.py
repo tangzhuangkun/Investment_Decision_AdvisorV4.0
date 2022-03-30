@@ -10,7 +10,7 @@ class OperateTargetVo:
 
     def __init__(self, target_type, operation, target_code, target_name, index_company, valuation_method, trigger_value,
                  trigger_percent, buy_and_hold_strategy, sell_out_strategy,
-                 monitoring_frequency, holder, status,exchange_location, hold_or_not):
+                 monitoring_frequency, holder, status,exchange_location, hold_or_not, trade):
         self._target_type = target_type
         self._operation = operation
         self._target_code = target_code
@@ -26,6 +26,7 @@ class OperateTargetVo:
         self._holder = holder
         self._status = status
         self._exchange_location = exchange_location
+        self._trade = trade
 
     # 标的类型
     @property
@@ -146,3 +147,11 @@ class OperateTargetVo:
     @hold_or_not.setter
     def hold_or_not(self, hold_or_not):
         self._hold_or_not = hold_or_not
+
+    # 交易方向，buy,sell
+    @property
+    def trade(self):
+        return self._trade
+    @trade.setter
+    def trade(self, trade):
+        self._trade = trade

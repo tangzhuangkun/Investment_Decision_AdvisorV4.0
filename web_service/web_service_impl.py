@@ -107,14 +107,23 @@ class WebServericeImpl:
         :param hold_or_not: 是否持有， 1为持有，0不持有
         :return:
         '''
-        # 清除前后空格
-        num = hold_or_not.strip()
         try:
-            if (int(num)==0 or int(num)==1):
+            if (int(hold_or_not)==0 or int(hold_or_not)==1):
                 return True
         except ValueError:
             pass
         return False
+
+    def __is_trade_right(self, trade):
+        '''
+        检查交易方向是否正确
+        :param trade: 买入-buy, 卖出-sell
+        :return:
+        '''
+        if(trade=='buy' or trade=='sell'):
+            return True
+        else:
+            return False
 
 
     def operate_target_impl(self,operation_target_params):
@@ -131,6 +140,7 @@ class WebServericeImpl:
         :param operation_target_params.target_type: 标的类型，如 index, stock，必选
         :param operation_target_params.target_code: 标的代码，如 指数代码 399997，股票代码 600519，必选
         :param operation_target_params.exchange_location: 标的上市地, 如 sz, sh, hk， 必选
+        :param operation_target_params.trade: 交易方向, 买入-buy, 卖出-sell， 必选
         :param operation_target_params.valuation_method: 估值策略, 如 pb,pe,ps， 必选
         :param operation_target_params.monitoring_frequency: 监控频率, secondly, minutely, hourly, daily, weekly, monthly, seasonally, yearly, periodically， 必选
         :param operation_target_params.holder: 标的持有人， 必选
@@ -184,6 +194,10 @@ class WebServericeImpl:
         # 标的持有人是否传入
         if (operation_target_params.holder == None):
             return {"msg": "标的持有人参数holder出错", "code": 400, "status": "Failure"}
+
+        # 交易方向
+        if(not self.__is_trade_right(operation_target_params.trade)):
+            return {"msg": "交易方向参数trade出错", "code": 400, "status": "Failure"}
 
         #####################################    create   #####################################################
 

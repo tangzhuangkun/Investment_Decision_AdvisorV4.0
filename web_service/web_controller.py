@@ -34,6 +34,8 @@ def operate_target():
     index_company = request.args.get("index_company")
     # 标的上市地, 如 sz, sh, hk
     exchange_location = request.args.get("exchange_location")
+    # 交易方向，如 bug，sell
+    trade = request.args.get("trade")
     # 估值策略, 如 pb,pe,ps
     valuation_method = request.args.get("valuation_method")
     # 估值触发绝对值值临界点，含等于，看指标具体该大于等于还是小于等于，如 pb估值时，0.9
@@ -57,7 +59,7 @@ def operate_target():
     params = operate_target_vo.OperateTargetVo(target_type, operation, target_code, target_name, index_company,
                                                valuation_method, trigger_value, trigger_percent, buy_and_hold_strategy,
                                                sell_out_strategy, monitoring_frequency, holder, status,
-                                               exchange_location, hold_or_not)
+                                               exchange_location, hold_or_not,trade)
     # 实现 更新，创建
     return jsonify(web_service_impl.WebServericeImpl().operate_target_impl(params))
 
