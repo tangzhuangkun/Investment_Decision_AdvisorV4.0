@@ -12,6 +12,7 @@ import database.db_operator as db_operator
 class WebServericeImpl:
     '''
     通过接口，网络与该决策系统互动的实现
+    执行层
     '''
 
     def __init__(self):
@@ -240,14 +241,14 @@ class WebServericeImpl:
                 # 插入的SQL
                 inserting_sql = """INSERT INTO investment_target(target_type, target_code, target_name, 
                 index_company, exchange_location, exchange_location_mic, hold_or_not, valuation_method, trigger_value, 
-                trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status, p_day) 
-                VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
+                trigger_percent, buy_and_hold_strategy, sell_out_strategy, trade, monitoring_frequency, holder, status, p_day) 
+                VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
                                 % (operation_target_params.target_type, operation_target_params.target_code,
                                    operation_target_params.target_name, operation_target_params.index_company,
                                    operation_target_params.exchange_location, exchange_location_mic,operation_target_params.hold_or_not,
                                    operation_target_params.valuation_method, operation_target_params.trigger_value,
                 operation_target_params.trigger_percent, operation_target_params.buy_and_hold_strategy ,
-                                   operation_target_params.sell_out_strategy, operation_target_params.monitoring_frequency,
+                                   operation_target_params.sell_out_strategy, operation_target_params.trade, operation_target_params.monitoring_frequency,
                                    operation_target_params.holder,operation_target_params.status,today)
                 # 是否执行成功
                 is_inserted_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", inserting_sql)
@@ -269,8 +270,8 @@ class WebServericeImpl:
                 # 插入的SQL
                 inserting_sql = """INSERT INTO investment_target(target_type, target_code, target_name, 
                 exchange_location, exchange_location_mic, hold_or_not, valuation_method, trigger_value, 
-                trigger_percent, buy_and_hold_strategy, sell_out_strategy, monitoring_frequency, holder, status, p_day) 
-                                    VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
+                trigger_percent, buy_and_hold_strategy, sell_out_strategy, trade, monitoring_frequency, holder, status, p_day) 
+                                    VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')""" \
                                 % (operation_target_params.target_type, operation_target_params.target_code,
                                    operation_target_params.target_name,
                                    operation_target_params.exchange_location, exchange_location_mic,
@@ -278,7 +279,7 @@ class WebServericeImpl:
                                    operation_target_params.valuation_method, operation_target_params.trigger_value,
                                    operation_target_params.trigger_percent,
                                    operation_target_params.buy_and_hold_strategy,
-                                   operation_target_params.sell_out_strategy,
+                                   operation_target_params.sell_out_strategy, operation_target_params.trade,
                                    operation_target_params.monitoring_frequency,
                                    operation_target_params.holder, operation_target_params.status,today)
                 # 是否执行成功
@@ -354,28 +355,27 @@ class WebServericeImpl:
                 dynamic_sql += ", hold_or_not=%(hold_or_not)s"
                 params_dict["hold_or_not"] = operation_target_params.hold_or_not
 
-            #####################################    update`index   ###################################################
+            # 加入 必传参数，跟踪标的类型， 跟踪标的代码， 标的上市地，估值方法, 监控频率, 标的持有人, 交易方向
+            params_dict["target_type"] = operation_target_params.target_type
+            params_dict["target_code"] = operation_target_params.target_code
+            params_dict["exchange_location"] = operation_target_params.exchange_location
+            params_dict["valuation_method"] = operation_target_params.valuation_method
+            params_dict["monitoring_frequency"] = operation_target_params.monitoring_frequency
+            params_dict["holder"] = operation_target_params.holder
+            params_dict["trade"] = operation_target_params.trade
 
+            #####################################    update`index   ###################################################
             # 如果是更新 指数标的
             if (operation_target_params.target_type == "index"):
-
                 # 如果指数开发公司不为空，则需要更新
                 if (operation_target_params.index_company != None):
                     dynamic_sql += ", index_company=%(index_company)s"
                     params_dict["index_company"] = operation_target_params.index_company
 
-                # 加入 必传参数，跟踪标的类型， 跟踪标的代码， 标的上市地，估值方法, 监控频率, 标的持有人
-                params_dict["target_type"] = operation_target_params.target_type
-                params_dict["target_code"] = operation_target_params.target_code
-                params_dict["exchange_location"] = operation_target_params.exchange_location
-                params_dict["valuation_method"] = operation_target_params.valuation_method
-                params_dict["monitoring_frequency"] = operation_target_params.monitoring_frequency
-                params_dict["holder"] = operation_target_params.holder
-
                 updating_sql = " UPDATE investment_target " + dynamic_sql + " WHERE target_type=%(target_type)s AND " \
                              "target_code=%(target_code)s AND exchange_location=%(exchange_location)s AND " \
                              "valuation_method=%(valuation_method)s AND monitoring_frequency=%(monitoring_frequency)s " \
-                             "AND holder=%(holder)s "
+                             "AND holder=%(holder)s AND trade=%(trade)s"
                 # 是否执行成功
                 is_updated_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", updating_sql, params_dict)
                 # 如果插入成功
@@ -393,18 +393,10 @@ class WebServericeImpl:
             #####################################    update`stock   ###################################################
             # 如果是更新 股票标的
             elif (operation_target_params.target_type == "stock"):
-                # 加入 必传参数，跟踪标的类型， 跟踪标的代码， 标的上市地，估值方法, 监控频率, 标的持有人
-                params_dict["target_type"] = operation_target_params.target_type
-                params_dict["target_code"] = operation_target_params.target_code
-                params_dict["exchange_location"] = operation_target_params.exchange_location
-                params_dict["valuation_method"] = operation_target_params.valuation_method
-                params_dict["monitoring_frequency"] = operation_target_params.monitoring_frequency
-                params_dict["holder"] = operation_target_params.holder
-
                 updating_sql = " UPDATE investment_target " + dynamic_sql + " WHERE target_type=%(target_type)s AND " \
                               "target_code=%(target_code)s AND exchange_location=%(exchange_location)s AND " \
                               "valuation_method=%(valuation_method)s AND monitoring_frequency=%(monitoring_frequency)s " \
-                              "AND holder=%(holder)s "
+                              "AND holder=%(holder)s AND trade=%(trade)s"
                 # 是否执行成功
                 is_updated_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", updating_sql,
                                                                                 params_dict)
