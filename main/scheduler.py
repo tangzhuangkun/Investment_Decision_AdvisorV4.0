@@ -37,6 +37,7 @@ class Scheduler:
 
 		#########  盘中(9:30-15:00)  #########
 
+		"""
 		try:
 			# 每10分钟执行一次股票的监控策略
 			scheduler.add_job(func=notification_plan_during_trading.NotificationPlanDuringTrading().minutely_estimation_notification,
@@ -46,6 +47,8 @@ class Scheduler:
 		except Exception as e:
 			# 抛错
 			custom_logger.CustomLogger().log_writter(e, 'error')
+		"""
+
 
 
 		try:
@@ -146,20 +149,20 @@ class Scheduler:
 		#####################      每月运行    ###################################################
 
 		try:
-			# 每月1号和17号，19：03，从国证指数官网接口收集过去几年表现优异的指数
+			# 每月2号，19：03，从国证指数官网接口收集过去几年表现优异的指数
 			scheduler.add_job(func=collect_excellent_index_from_cn_index.CollectExcellentIndexFromCNIndex().main,
 							  trigger='cron',
-							  month='1-12', day='1,17', hour=19, minute=3,
+							  month='1-12', day='2', hour=19, minute=3,
 							  id='collectCNExcellentIndicesTwiceAMonth')
 		except Exception as e:
 			# 抛错
 			custom_logger.CustomLogger().log_writter(e, 'error')
 
 		try:
-			# 每月1号和17号，19：05, 从中证指数官网接口收集过去几年表现优异的指数
+			# 每月2号和17号，19：05, 从中证指数官网接口收集过去几年表现优异的指数
 			scheduler.add_job(func=collect_excellent_index_from_cs_index.CollectExcellentIndexFromCSIndex().main,
 							  trigger='cron',
-							  month='1-12', day='1,17', hour=19, minute=5,
+							  month='1-12', day='2', hour=19, minute=5,
 							  id='collectCSExcellentIndicesTwiceAMonth')
 		except Exception as e:
 			# 抛错
