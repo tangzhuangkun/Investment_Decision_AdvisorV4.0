@@ -318,9 +318,9 @@ class CollectExcellentIndexFromCNIndex:
                                                           "same_time_threading":same_time_threading
                                                           }).start()
 
-            # 每个区块，50个指数，有10秒的时间执行，
-            # 10秒之后，如果还未成功获取数据的，可能代理IP已被网站屏蔽，未获取到数据的指数亦可放弃
-            # 10秒之后，启动下一个区块的数据抓取工作
+            # 每个区块，50个指数，有x秒的时间执行，
+            # x秒之后，如果还未成功获取数据的，可能代理IP已被网站屏蔽，未获取到数据的指数亦可放弃
+            # x秒之后，启动下一个区块的数据抓取工作
             time.sleep(self.sleep_time)
 
         return satisfied_index_list
