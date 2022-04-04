@@ -7,6 +7,7 @@
 import sys
 
 sys.path.append('..')
+import conf
 import web_service.web_service_impl as web_service_impl
 import vo.operate_target_vo as operate_target_vo
 from flask import Flask, request, jsonify  # 引入request对象
@@ -65,4 +66,4 @@ def operate_target():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host=conf.service_host, port=conf.service_port, debug=True,threaded=True)
