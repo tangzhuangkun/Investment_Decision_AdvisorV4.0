@@ -12,7 +12,8 @@ import vo.operate_target_vo as operate_target_vo
 from flask import Flask, request, jsonify  # 引入request对象
 
 app = Flask(__name__)
-
+# 解决中文乱码问题
+app.config['JSONIFY_MIMETYPE'] ="application/json;charset=utf-8"
 
 @app.route("/operate_investment_target", methods=['GET','POST'])
 def operate_target():
