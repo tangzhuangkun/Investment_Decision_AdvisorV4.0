@@ -26,12 +26,13 @@ class CollectExcellentIndexFromCNIndex:
         # 5年年化收益率
         self.five_year_yield_rate_standard = 15
         # 最大线程数
-        self.max_thread_num = 20
+        self.max_thread_num = 10
         # 同时获取x个IP和5xUA
-        self.IP_UA_num = 30
-        # 获取到的IP和UA样式
-        # 如 ([{'ip_address': '27.158.237.107:24135'}, {'ip_address': '27.151.158.219:50269'}], [{'ua': 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1464.0 Safari/537.36'}, {'ua': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0.6'}])
-        self.ip_address_dict_list, self.ua_dict_list = disguise.Disguise().get_multi_IP_UA(self.IP_UA_num)
+        self.IP_UA_num = 5
+        # 将中证所有指数代码分成多个区块，每个区块最多拥有多少个指数代码
+        self.max_index_codes = 50
+        # 每个区块执行的时间
+        self.sleep_time = 30
 
     def parse_interface_to_get_index_code_content(self, header, proxy):
         '''
@@ -43,7 +44,7 @@ class CollectExcellentIndexFromCNIndex:
         '''
 
         # 指数代码
-        index_code_set = set()
+        index_code_list = list()
 
         # 接口地址
         interface_url = "http://www.cnindex.com.cn/index/indexList?channelCode=-1&rows=20000&pageNum=1"
@@ -67,9 +68,9 @@ class CollectExcellentIndexFromCNIndex:
             data_json = json.loads(raw_page)["data"]["rows"]
 
             for index_info in data_json:
-                index_code_set.add(index_info["indexcode"])
+                index_code_list.append(index_info["indexcode"])
 
-            return index_code_set
+            return index_code_list
 
 
         except Exception as e:
@@ -85,13 +86,11 @@ class CollectExcellentIndexFromCNIndex:
         return: 数代码的set
         '''
 
-        # 随机选取，伪装，隐藏UA和IP
-        pick_an_int = random.randint(0,self.IP_UA_num-1)
-        header = {"user-agent": self.ua_dict_list[random.randint(0,self.IP_UA_num*5-1)]['ua'], 'Connection': 'close'}
-        proxy = {"http": 'http://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                  self.ip_address_dict_list[pick_an_int]['ip_address']),
-                 "https": 'https://{}:{}@{}'.format(conf.proxyIPUsername, conf.proxyIPPassword,
-                                                    self.ip_address_dict_list[pick_an_int]['ip_address'])}
+        # 此处获取全部指数代码和名称可能存在 超时，链接出错等原因导致 获取到信息的时间过长，约20秒-40秒
+        # 代理IP存活时长一般为1分钟左右，若一口气调用太多代理IP，大概率存在代理IP已失活
+        # 此处为该脚本第一次调用 代理IP的API，且存在获取时间过长，因此仅调用1个IP和1个UA
+        # 伪装，隐藏UA和IP
+        header, proxy = disguise.Disguise().assemble_header_proxy()
 
         return self.parse_interface_to_get_index_code_content(header, proxy)
 
@@ -293,24 +292,36 @@ class CollectExcellentIndexFromCNIndex:
         '''
 
         # 获取所有指数的代码
-        index_code_set = self.call_interface_to_get_all_index_code_from_cn_index()
+        index_code_list = self.call_interface_to_get_all_index_code_from_cn_index()
         # 满足条件的指数
         satisfied_index_list = []
+        # 所有指数的代码平均分为多个区块，每份为x个元素可迭代对象list
+        generate_splitted_lists = self.split_list_into_lists_with_certain_elements(index_code_list,
+                                                                                   self.max_index_codes)
 
         # 启用线程锁
         threadLock = threading.Lock()
         # 限制线程的最大数量
         same_time_threading = threading.Semaphore(self.max_thread_num)
 
-        for index_code in index_code_set:
-            same_time_threading.acquire()
-            # 启动线程
-            threading.Thread(target=self.call_interface_to_get_single_index_past_performance,
-                                              kwargs={"index_code": index_code,
-                                                      "satisfied_index_list": satisfied_index_list,
-                                                      "threadLock": threadLock,
-                                                      "same_time_threading":same_time_threading
-                                                      }).start()
+        for splitted_list in generate_splitted_lists:
+            # 获取到的IP和UA样式
+            # 如 ([{'ip_address': '27.158.237.107:24135'}, {'ip_address': '27.151.158.219:50269'}], [{'ua': 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/28.0.1464.0 Safari/537.36'}, {'ua': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:17.0) Gecko/20100101 Firefox/17.0.6'}])
+            self.ip_address_dict_list, self.ua_dict_list = disguise.Disguise().get_multi_IP_UA(self.IP_UA_num)
+            for index_code in splitted_list:
+                same_time_threading.acquire()
+                # 启动线程
+                threading.Thread(target=self.call_interface_to_get_single_index_past_performance,
+                                                  kwargs={"index_code": index_code,
+                                                          "satisfied_index_list": satisfied_index_list,
+                                                          "threadLock": threadLock,
+                                                          "same_time_threading":same_time_threading
+                                                          }).start()
+
+            # 每个区块，50个指数，有10秒的时间执行，
+            # 10秒之后，如果还未成功获取数据的，可能代理IP已被网站屏蔽，未获取到数据的指数亦可放弃
+            # 10秒之后，启动下一个区块的数据抓取工作
+            time.sleep(self.sleep_time)
 
         return satisfied_index_list
 
@@ -355,6 +366,16 @@ class CollectExcellentIndexFromCNIndex:
                         # 日志记录
                         msg = '将从国证官网接口获取的优异指数' + p_day + index_code + index_name + ' 存入数据库时错误  ' + str(e)
                         custom_logger.CustomLogger().log_writter(msg, 'error')
+
+    def split_list_into_lists_with_certain_elements(self, lt, n):
+        '''
+        将lt平均分，平均分后，每份个数为n
+        :param lt: 为一个列表
+        :param n: 平分后每份列表的的个数n
+        :return:
+        '''
+        for i in range(0, len(lt), n):
+            yield lt[i:i + n]
 
     def main(self):
         self.collect_and_save()
