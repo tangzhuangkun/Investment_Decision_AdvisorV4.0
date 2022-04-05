@@ -57,7 +57,7 @@ class DataMinerCommonTargetIndexOperator:
         # 如 [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
 
         # 查询SQL
-        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and valuation_method = '%s' and status = 'active'" % (method)
+        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and status = 'active' and trade='buy' and valuation_method = '%s'  " % (method)
 
         # 查询
         selecting_result = db_operator.DBOperator().select_all("target_pool", selecting_sql)
@@ -73,7 +73,7 @@ class DataMinerCommonTargetIndexOperator:
         # # 如 [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
 
         # 查询SQL
-        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and index_company = '%s' and status = 'active'" % (company_name)
+        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and status = 'active' and trade='buy' and index_company = '%s'  " % (company_name)
 
         # 查询
         selecting_result = db_operator.DBOperator().select_all("target_pool", selecting_sql)
@@ -105,7 +105,7 @@ class DataMinerCommonTargetIndexOperator:
 if __name__ == '__main__':
     time_start = time.time()
     go = DataMinerCommonTargetIndexOperator()
-    result = go.index_valuated_by_method('pe')
+    result = go.get_given_index_company_index('中证')
     print(result)
     time_end = time.time()
     print('time:')

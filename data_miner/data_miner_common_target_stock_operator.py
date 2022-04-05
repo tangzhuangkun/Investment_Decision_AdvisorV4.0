@@ -40,7 +40,7 @@ class DataMinerCommonTargetStockOperator:
         # 查询SQL
         selecting_sql = "select target_code as stock_code, target_name as stock_name, concat(exchange_location,target_code) as stock_code_with_init, " \
                         "concat(target_code,'.',exchange_location_mic) as stock_code_with_market_code, valuation_method, " \
-                        "trigger_value, trigger_percent from investment_target where target_type = 'stock' and status = 'active'"
+                        "trigger_value, trigger_percent from investment_target where target_type = 'stock' and status = 'active'  and trade='buy' "
 
         # 查询
         selecting_result = db_operator.DBOperator().select_all("target_pool", selecting_sql)
