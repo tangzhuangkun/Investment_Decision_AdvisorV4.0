@@ -3,7 +3,6 @@ import sys
 
 sys.path.append("..")
 import database.db_operator as db_operator
-import log.custom_logger as custom_logger
 
 class DataMinerCommonTargetIndexOperator:
     # 读取标的池中关于指数的信息
@@ -11,7 +10,9 @@ class DataMinerCommonTargetIndexOperator:
     def __init__(self):
         pass
 
-    def get_indexes_and_their_names(self):
+    '''
+    # 可用代码，暂时未被引用，2022.04.05
+        def get_indexes_and_their_names(self):
         # 获取标的池中跟踪关注指数及他们的中文名称
         # 输入：无
         # 输出：获取标的池中跟踪关注指数的指数代码，中文名称, 地点缩写+指数代码，指数代码+证券市场代码
@@ -26,8 +27,12 @@ class DataMinerCommonTargetIndexOperator:
         # 返回 如
         # [{'index_code': '399997', 'index_name': '中证白酒指数', 'index_code_with_init': 'sz399997', 'index_code_with_market_code': '399997.XSHE'},,,,]
         return selecting_result
+    '''
 
-    def get_index_valuation_method(self):
+
+    '''
+        # 可用代码，暂时未被引用，2022.04.05
+        def get_index_valuation_method(self):
         # 获取标的池中跟踪关注指数的估值方式
         # 输入：无
         # 输出：获取标的池中跟踪关注指数的指数代码，中文名称, 地点缩写+指数代码，指数代码+证券市场代码，估值方式
@@ -42,6 +47,8 @@ class DataMinerCommonTargetIndexOperator:
         # 返回 如
         # [{'index_code': '399997', 'index_name': '中证白酒指数', 'index_code_with_init': 'sz399997', 'index_code_with_market_code': '399997.XSHE', 'valuation_method': 'pe'},，，，]
         return selecting_result
+    '''
+
 
     def index_valuated_by_method(self, method):
         # 获取通过xx估值法 估值的指数代码及其对应名称
@@ -50,7 +57,7 @@ class DataMinerCommonTargetIndexOperator:
         # 如 [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
 
         # 查询SQL
-        selecting_sql = "select index_code, index_name, concat(exchange_location_1,index_code) as index_code_with_init, concat(index_code,'.',exchange_location_2) as index_code_with_market_code from index_target where valuation_method = '%s'" % (method)
+        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where valuation_method = '%s'" % (method)
 
         # 查询
         selecting_result = db_operator.DBOperator().select_all("target_pool", selecting_sql)
@@ -66,7 +73,7 @@ class DataMinerCommonTargetIndexOperator:
         # # 如 [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
 
         # 查询SQL
-        selecting_sql = "select index_code, index_name, concat(exchange_location_1,index_code) as index_code_with_init, concat(index_code,'.',exchange_location_2) as index_code_with_market_code from index_target where index_company = '%s'" % (company_name)
+        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where index_company = '%s'" % (company_name)
 
         # 查询
         selecting_result = db_operator.DBOperator().select_all("target_pool", selecting_sql)
@@ -74,7 +81,9 @@ class DataMinerCommonTargetIndexOperator:
         # [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},,,]
         return selecting_result
 
-    def get_indexes_names_companies(self):
+    '''
+        # 可用代码，暂时未被引用，2022.04.05
+        def get_indexes_names_companies(self):
         # 获取标的池中跟踪关注指数,他们的中文名称及指数开发公司
         # 输入：无
         # 输出：获取标的池中跟踪关注指数,他们的中文名称及指数开发公司。
@@ -89,12 +98,14 @@ class DataMinerCommonTargetIndexOperator:
         # 返回 如
         # [{'index_code': '399997', 'index_name': '中证白酒指数', 'index_code_with_init': 'sz399997', 'index_code_with_market_code': '399997.XSHE', 'index_company': '中证'},,,,]
         return selecting_result
+    '''
+
 
 
 if __name__ == '__main__':
     time_start = time.time()
     go = DataMinerCommonTargetIndexOperator()
-    result = go.get_indexes_names_companies()
+    result = go.get_given_index_company_index('中证')
     print(result)
     time_end = time.time()
     print('time:')
