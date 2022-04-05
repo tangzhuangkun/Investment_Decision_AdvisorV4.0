@@ -81,7 +81,7 @@ class NotificationPlanDuringTrading:
                 trigger_msg += "股票代码： " + stock_code_with_location+"\n"
                 for each_msg in return_msg_list:
                     # 拼接 策略方法+实时估值情况+被推送的原因
-                    trigger_msg += each_msg[2]+": "+each_msg[3] +"\n"
+                    trigger_msg += each_msg[2]+": "+str(each_msg[3]) +"\n"
                     trigger_msg += each_msg[4]+"\n\n"
                 # 邮件发送所有触发信息
                 try:
@@ -115,8 +115,8 @@ class NotificationPlanDuringTrading:
 if __name__ == '__main__':
     time_start = time.time()
     go = NotificationPlanDuringTrading()
-    go.daily_estimation_notification()
-    #go.minutely_estimation_notification()
+    #go.daily_estimation_notification()
+    go.minutely_estimation_notification()
     time_end = time.time()
     print(time_end - time_start)
 
