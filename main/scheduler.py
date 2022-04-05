@@ -37,18 +37,15 @@ class Scheduler:
 
 		#########  盘中(9:30-15:00)  #########
 
-		"""
 		try:
-			# 每10分钟执行一次股票的监控策略
+			# 每分钟执行一次股票的监控策略
 			scheduler.add_job(func=notification_plan_during_trading.NotificationPlanDuringTrading().minutely_estimation_notification,
 							  trigger='cron',
-							  hour='9,10,11,13,14',minute='5,15,25,35,45,55',day_of_week='mon,tue,wed,thu,fri',
+							  hour='9,10,11,13,14,15,16',minute='0-59',day_of_week='mon,tue,wed,thu,fri',
 							  id='tradingdaymonitorstocksestimationsandtriggers')
 		except Exception as e:
 			# 抛错
 			custom_logger.CustomLogger().log_writter(e, 'error')
-		"""
-
 
 
 		try:
