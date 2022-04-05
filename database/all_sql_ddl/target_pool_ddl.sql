@@ -57,7 +57,7 @@ values ('index', '000036','中证上证消费','中证','sz','XSHE', 0, 'buy', '
 
 insert into investment_target (target_type, target_code, target_name, exchange_location,
                                exchange_location_mic, hold_or_not, trade, valuation_method, trigger_value, trigger_percent, monitoring_frequency, holder, status, p_day)
-values ('stock','000002','万科A','sz','XSHE',0, 'buy', 'pb',0.9,5,'minutely', 'zhuangkun', 'active','2022-03-27');
+values ('stock','000002','万科A','sz','XSHE',0, 'buy', 'pb',0.9,1,'minutely', 'zhuangkun', 'active','2022-03-27');
 
 insert into investment_target (target_type, target_code, target_name, exchange_location,
                                exchange_location_mic, hold_or_not, trade, valuation_method, trigger_value, trigger_percent, monitoring_frequency, holder, status, p_day)
