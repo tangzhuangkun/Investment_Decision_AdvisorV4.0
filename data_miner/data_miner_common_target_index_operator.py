@@ -57,7 +57,7 @@ class DataMinerCommonTargetIndexOperator:
         # 如 [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
 
         # 查询SQL
-        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and valuation_method = '%s'" % (method)
+        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and valuation_method = '%s' and status = 'active'" % (method)
 
         # 查询
         selecting_result = db_operator.DBOperator().select_all("target_pool", selecting_sql)
@@ -73,7 +73,7 @@ class DataMinerCommonTargetIndexOperator:
         # # 如 [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
 
         # 查询SQL
-        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and index_company = '%s'" % (company_name)
+        selecting_sql = "select target_code as index_code, target_name as index_name, concat(exchange_location,target_code) as index_code_with_init, concat(target_code,'.',exchange_location_mic) as index_code_with_market_code from investment_target where target_type = 'index' and index_company = '%s' and status = 'active'" % (company_name)
 
         # 查询
         selecting_result = db_operator.DBOperator().select_all("target_pool", selecting_sql)
