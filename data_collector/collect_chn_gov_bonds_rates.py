@@ -36,12 +36,18 @@ class CollectCHNGovBondsRates:
         # 解决报错 InsecureRequestWarning: Unverified HTTPS request is being made
         requests.packages.urllib3.disable_warnings()
 
-        # 伪装，隐藏UA和IP
-        header, proxy = disguise.Disguise().assemble_header_proxy()
+        try:
+            # 伪装，隐藏UA和IP
+            header, proxy = disguise.Disguise().assemble_header_proxy()
+            # 得到页面的信息
+            raw_page = requests.post(bonds_interface_address, headers=header, proxies=proxy, verify=False, stream=False,
+                                    timeout=10).text
+        except Exception as e:
+            # 日志记录
+            msg = "从中国债券信息网" + bonds_interface_address + '  ' + "获取当日国债收益率失败,错误为 "+ str(e) +" 即将重试 "
+            custom_logger.CustomLogger().log_writter(msg, lev='warning')
+            return self.call_bonds_interface_to_collect_all_historical_data(start_day, end_day, is_only_today=0)
 
-        # 得到页面的信息
-        raw_page = requests.post(bonds_interface_address, headers=header, proxies=proxy, verify=False, stream=False,
-                                timeout=10).text
         # 转换成字典数据
         # [{"ycDefId":"2c9081e50a2f9606010a3068cae700015.0","ycDefName":"中债国债收益率曲线(到期)(5y)","ycYWName":null,"worktime":"","seriesData":[[1635868800000,2.7986],[1635955200000,2.7759]],"isPoint":false,"hyCurve":false,"point":false},{"ycDefId":"2c9081e50a2f9606010a3068cae7000110.0","ycDefName":"中债国债收益率曲线(到期)(10y)","ycYWName":null,"worktime":"","seriesData":[[1635868800000,2.9385],[1635955200000,2.9261]],"isPoint":false,"hyCurve":false,"point":false},{"ycDefId":"yzdcqx","ycDefName":"点差曲线","ycYWName":null,"worktime":null,"seriesData":[[1635868800000,0.1399],[1635955200000,0.1502]],"isPoint":false,"hyCurve":false,"point":false}]
         data_json_list = json.loads(raw_page)
