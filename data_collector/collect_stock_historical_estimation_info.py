@@ -13,6 +13,8 @@ import config.lxr_token as lxr_token
 import log.custom_logger as custom_logger
 
 
+
+
 class CollectStockHistoricalEstimationInfo:
     # 收集所需的股票的估值信息
     # PE-TTM :pe_ttm
@@ -38,6 +40,11 @@ class CollectStockHistoricalEstimationInfo:
     # 陆股通持仓金额 :ha_shm
 
     # 运行频率：每天收盘后
+
+    '''
+    # TODO
+    收集股票估值，包含 监控指数的成分股，还是 标的池中的个股，可能包含港股和美股
+    '''
 
     def __init__(self):
         # 从数据库取数时，每页取的条数信息
