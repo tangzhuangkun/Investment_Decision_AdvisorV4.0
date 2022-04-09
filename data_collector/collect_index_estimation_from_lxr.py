@@ -6,8 +6,8 @@ import sys
 
 sys.path.append("..")
 import database.db_operator as db_operator
-import config.lxr_token as lxr_token
 import log.custom_logger as custom_logger
+import main.get_conf_info as get_conf_info
 
 class CollectIndexEstimationFromLXR:
     # 从理杏仁收集指数估值信息
@@ -33,7 +33,7 @@ class CollectIndexEstimationFromLXR:
         # 输出： 将获取到指数估值数据存入数据库
 
         # 随机获取一个token
-        token = lxr_token.LXRToken().get_token()
+        token = get_conf_info.GetConfInfo().get_lxr_token()
         # 理杏仁要求 在请求的headers里面设置Content-Type为application/json。
         headers = {'Content-Type': 'application/json'}
         # 理杏仁 获取A股指数基本面数据 接口，文档如下
@@ -96,7 +96,8 @@ class CollectIndexEstimationFromLXR:
             if 'message' in content and content['message'] == "Illegal token.":
                 # 日志记录失败
                 msg = '无法使用理杏仁token ' + token + ' ' + '来采集指数估值 ' + \
-                      index_code+ '' +self.index_code_name_dict.get(index_code) + ' ' + start_date + ' ' + end_date
+                      index_code+ '' +self.index_code_name_dict.get(index_code) + ' ' + start_date + ' ' + end_date \
+                      + ' 报错token为 ' + token
                 custom_logger.CustomLogger().log_writter(msg, 'error')
                 return self.collect_index_estimation_in_a_period_time(index_code, start_date, end_date)
 
@@ -117,7 +118,7 @@ class CollectIndexEstimationFromLXR:
         # 输出： 将获取到指数估值数据存入数据库
 
         # 随机获取一个token
-        token = lxr_token.LXRToken().get_token()
+        token = get_conf_info.GetConfInfo().get_lxr_token()
         # 理杏仁要求 在请求的headers里面设置Content-Type为application/json。
         headers = {'Content-Type': 'application/json'}
         # 理杏仁 获取A股指数基本面数据 接口，文档如下
@@ -175,10 +176,10 @@ class CollectIndexEstimationFromLXR:
         req = requests.post(url, data=values, headers=headers)
         content = req.json()
 
-        if 'message' in content and content['message'] == "illegal token.":
+        if 'message' in content and content['message'] == "Illegal token.":
             # 日志记录失败
             msg = '无法使用理杏仁token ' + token + ' ' + '来采集指数估值 ' + \
-                  str(self.index_code_name_dict) + ' ' + date
+                  str(self.index_code_name_dict) + ' ' + date + ' 报错token为 ' + token
             custom_logger.CustomLogger().log_writter(msg, 'error')
             return self.collect_index_estimation_in_a_special_date(date)
 
@@ -187,7 +188,8 @@ class CollectIndexEstimationFromLXR:
             self.save_content_into_db(content)
         except Exception as e:
             # 日志记录失败
-            msg = '数据存入数据库失败。 ' + '理杏仁指数估值接口返回为 '+str(content) + '。 抛错为 '+ str(e)
+            msg = '数据存入数据库失败。 ' + '理杏仁指数估值接口返回为 '+str(content) + '。 抛错为 '+ str(e) \
+                  + ' 使用的Token为' + token
             custom_logger.CustomLogger().log_writter(msg, 'error')
 
 
