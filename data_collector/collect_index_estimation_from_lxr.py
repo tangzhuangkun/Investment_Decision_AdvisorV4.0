@@ -93,7 +93,7 @@ class CollectIndexEstimationFromLXR:
             req = requests.post(url, data=values, headers=headers)
             content = req.json()
 
-            if 'message' in content and content['message'] == "illegal token.":
+            if 'message' in content and content['message'] == "Illegal token.":
                 # 日志记录失败
                 msg = '无法使用理杏仁token ' + token + ' ' + '来采集指数估值 ' + \
                       index_code+ '' +self.index_code_name_dict.get(index_code) + ' ' + start_date + ' ' + end_date
@@ -105,7 +105,8 @@ class CollectIndexEstimationFromLXR:
                 self.save_content_into_db(content)
             except Exception as e:
                 # 日志记录失败
-                msg = '数据存入数据库失败。 ' + '理杏仁指数估值接口返回为 '+str(content) + '。 抛错为 '+ str(e)
+                msg = '数据存入数据库失败。 ' + '理杏仁指数估值接口返回为 '+str(content) + '。 抛错为 '+ str(e) + \
+                      ' 使用的Token为' + token
                 custom_logger.CustomLogger().log_writter(msg, 'error')
 
 
