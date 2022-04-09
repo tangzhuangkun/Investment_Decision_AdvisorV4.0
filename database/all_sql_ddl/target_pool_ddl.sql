@@ -62,3 +62,24 @@ values ('stock','000002','万科A','sz','XSHE',0, 'buy', 'pb',0.9,1,'minutely', 
 insert into investment_target (target_type, target_code, target_name, exchange_location,
                                exchange_location_mic, hold_or_not, trade, valuation_method, trigger_value, trigger_percent, monitoring_frequency, holder, status, p_day)
 values ('stock','600048','保利发展','sh','XSHG',0, 'buy', 'pb',0.89,20,'minutely', 'zhuangkun', 'active','2022-03-27');
+
+
+
+/* --------- user：investor1 ------ */
+/* --------- db：target_pool ------ */
+/*创建一个表，all_tracking_stocks_rf，用于存储 所有的需要被跟踪和收集数据的股票，可实时更新*/
+
+USE target_pool;
+DROP TABLE IF EXISTS `all_tracking_stocks_rf`;
+CREATE TABLE IF NOT EXISTS `all_tracking_stocks_rf`(
+	`id` MEDIUMINT NOT NULL AUTO_INCREMENT,
+	`stock_code`  VARCHAR(30)  NOT NULL COMMENT '股票代码，如 600519',
+	`stock_name`  VARCHAR(50) NOT NULL COMMENT '股票名称，如 贵州茅台',
+    `exchange_location`  VARCHAR(10) NOT NULL COMMENT '标的上市地，如 sh,sz,hk',
+    `exchange_location_mic`  VARCHAR(10) NOT NULL COMMENT '标的上市地MIC，如 XSHG, XSHE，XHKG 等',
+	`p_day` DATE DEFAULT NULL COMMENT '业务日期',
+    `submission_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
+    `update_time` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+	PRIMARY KEY ( `id` )
+	)ENGINE=InnoDB DEFAULT CHARSET=utf8
+COMMENT '所有的需要被跟踪和收集数据的股票，可实时更新';
