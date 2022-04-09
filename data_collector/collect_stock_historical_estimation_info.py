@@ -11,6 +11,7 @@ sys.path.append("..")
 import database.db_operator as db_operator
 import config.lxr_token as lxr_token
 import log.custom_logger as custom_logger
+import main.get_conf_info as get_conf_info
 
 
 
@@ -108,7 +109,7 @@ class CollectStockHistoricalEstimationInfo:
     def get_lxr_token(self):
         # 随机获取一个理杏仁的token、
         # 输出：理杏仁的token
-        return lxr_token.LXRToken().get_token()
+        return get_conf_info.GetConfInfo().get_lxr_token()
 
     def collect_a_period_time_estimation(self, stock_code_name_dict, start_date, end_date):
         # 调取理杏仁接口，获取一段时间范围内，该股票估值数据, 并储存
@@ -182,7 +183,7 @@ class CollectStockHistoricalEstimationInfo:
             self.save_content_into_db(content, stock_code_name_dict, "period")
         except Exception as e:
             # 日志记录失败
-            msg = '数据存入数据库失败。 ' + '理杏仁接口返回为 '+str(content) + '。 抛错为 '+ str(e)
+            msg = '数据存入数据库失败。 ' + '理杏仁接口返回为 '+str(content) + '。 抛错为 '+ str(e) + ' 报错token为 ' + token
             custom_logger.CustomLogger().log_writter(msg, 'error')
 
         '''
@@ -268,7 +269,7 @@ class CollectStockHistoricalEstimationInfo:
             self.save_content_into_db(content, stock_codes_names_dict, "date")
         except Exception as e:
             # 日志记录失败
-            msg = '数据存入数据库失败。 ' + '理杏仁接口返回为 '+str(content) + '。 抛错为 '+ str(e)
+            msg = '数据存入数据库失败。 ' + '理杏仁接口返回为 ' + str(content) + '。 抛错为 ' + str(e) + ' 报错token为 ' + token
             custom_logger.CustomLogger().log_writter(msg, 'error')
 
 
@@ -509,7 +510,10 @@ class CollectStockHistoricalEstimationInfo:
 
 
 if __name__ == "__main__":
+    time_start = time.time()
     go = CollectStockHistoricalEstimationInfo()
+    #result = go.get_lxr_token()
+    #print(result)
     # stock_codes_names_dict = go.all_demanded_stocks()
     # print(stock_codes_names_dict)
     #go.collect_a_period_time_estimation({"600519":"贵州茅台"}, "2020-11-04", "2020-11-05")
@@ -522,3 +526,5 @@ if __name__ == "__main__":
     #print(go.all_demanded_stocks_counter())
     #go.latest_collection_date("2021-04-01")
     #go.test_date_loop()
+    time_end = time.time()
+    print('Time Cost: ' + str(time_end - time_start))
