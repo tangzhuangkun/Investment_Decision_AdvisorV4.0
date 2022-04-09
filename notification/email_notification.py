@@ -7,8 +7,8 @@ import time
 
 import sys
 sys.path.append("..")
-import config.notification_account as notification_account
 import log.custom_logger as custom_logger
+import conf
 
 
 class EmailNotification:
@@ -17,15 +17,15 @@ class EmailNotification:
 	def __init__(self):
 		# 设置发送邮件的参数
 		# 设置服务器,第三方 SMTP 服务
-		self.email_host = notification_account.email_host
+		self.email_host = conf.email_host
 		# 用户名
-		self.email_user = notification_account.email_user
+		self.email_user = conf.email_user
 		# 获取授权码，不是密码
-		self.email_pass = notification_account.email_pass
+		self.email_pass = conf.email_pass
 		# 发件人账号
-		self.email_sender = notification_account.email_sender
+		self.email_sender = conf.email_sender
 		# 接收邮件
-		self.email_receivers = notification_account.email_receivers
+		self.email_receivers = conf.email_receivers
 		# 获取当前时间
 		self.today= time.strftime("%Y-%m-%d", time.localtime())
 		# 设置邮件主题
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 	time_start = time.time()
 	go = EmailNotification()
 	#real_time_pe = go.get_index_real_time_pe('399997')
-	send_content = 'hello 2021-01-29  '
+	send_content = 'hello 2022-04-08  '
 	go.send_customized_content(' 基金行情分析', send_content)
 	time_end = time.time()
 	print(time_end-time_start)
