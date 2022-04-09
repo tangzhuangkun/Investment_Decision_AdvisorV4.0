@@ -33,7 +33,7 @@ class CalculateIndexHistoricalEstimations:
 
         # 运行 创建中间层
         # 相对路径，是相对于程序执行命令所在的目录，./ 表示的不是脚本所在的目录，而是程序执行命令所在的目录，也就是所谓的当前目录。
-        with open("../data_miner/predict_all_indexes_latest_component.sql", encoding='utf-8', mode='r') as view_f:
+        with open("../data_miner/sql_query/predict_all_indexes_latest_component.sql", encoding='utf-8', mode='r') as view_f:
             # 分割sql文件中的执行语句，挨句执行
             sql_list = view_f.read().split(';')[:-1]
             for x in sql_list:
@@ -62,7 +62,7 @@ class CalculateIndexHistoricalEstimations:
         # 运行计算脚本
 
         # 相对路径，是相对于程序执行命令所在的目录，./ 表示的不是脚本所在的目录，而是程序执行命令所在的目录，也就是所谓的当前目录。
-        with open("../data_miner/cal_index_his_estimation.sql", encoding='utf-8', mode='r') as f:
+        with open("../data_miner/sql_query/cal_index_his_estimation.sql", encoding='utf-8', mode='r') as f:
             # 读取整个sql文件
 
             # 分割sql文件中的执行语句，挨句执行

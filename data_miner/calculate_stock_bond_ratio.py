@@ -30,7 +30,7 @@ class CalculateStockBondRatio:
         # 运行mysql脚本以计算股债收益比
 
         # 相对路径，是相对于程序执行命令所在的目录，./ 表示的不是脚本所在的目录，而是程序执行命令所在的目录，也就是所谓的当前目录。
-        with open("../data_miner/cal_stock_bond_ratio.sql", encoding='utf-8', mode='r') as script_f:
+        with open("../data_miner/sql_query/cal_stock_bond_ratio.sql", encoding='utf-8', mode='r') as script_f:
             # 分割sql文件中的执行语句，挨句执行
             sql_list = script_f.read().split(';')[:-1]
             for x in sql_list:
