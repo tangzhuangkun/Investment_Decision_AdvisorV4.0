@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS `stocks_main_estimation_indexes_historical_data`(
 	`stock_code` VARCHAR(20) NOT NULL COMMENT '股票代码',
 	`stock_name` VARCHAR(20) NOT NULL COMMENT '股票名称',
 	`date` DATE NOT NULL COMMENT '日期',
+	`exchange_location`  VARCHAR(10) NOT NULL COMMENT '标的上市地，如 sh,sz,hk',
+    `exchange_location_mic`  VARCHAR(10) NOT NULL COMMENT '标的上市地MIC，如 XSHG, XSHE，XHKG 等',
 	`pe_ttm` DECIMAL(24,16) NOT NULL COMMENT '滚动市盈率',
 	`pe_ttm_nonrecurring` DECIMAL(24,16) NOT NULL COMMENT '扣非滚动市盈率',
 	`pb` DECIMAL(24,16) NOT NULL COMMENT '市净率',
@@ -84,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `stocks_main_estimation_indexes_historical_data`(
 	`securities_balances` DECIMAL(24,6) DEFAULT 0 COMMENT '融券余额',
 	`stock_connect_holding_amount` DECIMAL(24,6) DEFAULT NULL COMMENT '陆股通持仓金额',
 	`submission_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '提交时间',
-	UNIQUE INDEX (`stock_code`, `date`),
+	UNIQUE INDEX (`stock_code`, `date`, `exchange_location`, `exchange_location_mic`),
 	PRIMARY KEY ( `id` )
 	)ENGINE=InnoDB DEFAULT CHARSET=utf8
 COMMENT '股票估值指标历史数据';
