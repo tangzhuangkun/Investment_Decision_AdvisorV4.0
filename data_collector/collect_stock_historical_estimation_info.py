@@ -397,6 +397,7 @@ class CollectStockHistoricalEstimationInfo:
         #msg = str(stock_codes_names_dict) + '\'s estimation info has been saved '
         #custom_logger.CustomLogger().log_writter(msg, 'info')
 
+    # todo 这一步可以省略，通过 insert ignore into stocks_main_estimation_indexes_historical_data
     def is_existing(self, stock_code, stock_name, date):
         # 检查数据库中是否有记录，主要是检查是否为同一支股票同一日期
         # param: stock_code, 股票代码
