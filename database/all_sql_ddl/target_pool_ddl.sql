@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `all_tracking_stocks_rf`(
 	`p_day` DATE DEFAULT NULL COMMENT '业务日期',
     `submission_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
     `update_time` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    UNIQUE INDEX (stock_code, stock_name, exchange_location, exchange_location_mic),
+    UNIQUE INDEX (stock_code, exchange_location_mic),
 	PRIMARY KEY ( `id` )
 	)ENGINE=InnoDB DEFAULT CHARSET=utf8
 COMMENT '所有的需要被跟踪和收集数据的股票，可实时更新';
