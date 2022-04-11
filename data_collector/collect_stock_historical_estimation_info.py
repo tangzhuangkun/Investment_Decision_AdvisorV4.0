@@ -41,10 +41,6 @@ class CollectStockHistoricalEstimationInfo:
 
     # 运行频率：每天收盘后
 
-    '''
-    # TODO
-    收集股票估值，包含 监控指数的成分股，还是 标的池中的个股，可能包含港股和美股
-    '''
 
     def __init__(self):
         # 从数据库取数时，每页取的条数信息
@@ -54,8 +50,24 @@ class CollectStockHistoricalEstimationInfo:
         # 获取当前日期
         self.today = time.strftime("%Y-%m-%d", time.localtime())
 
+    def get_all_exchange_locaiton_mics(self):
+        '''
+        获取所有交易所的mic码
+        :return: mic码的list，如 ['XSHE', 'XHKG', 'XSHG']
+        '''
+        selecting_sql = "SELECT DISTINCT exchange_location_mic FROM all_tracking_stocks_rf"
+        all_exchange_locaiton_mics_dict = db_operator.DBOperator().select_all("target_pool", selecting_sql)
+        exchange_location_mic_list = list()
+        for mic in all_exchange_locaiton_mics_dict:
+            exchange_location_mic_list.append(mic.get("exchange_location_mic"))
+        return exchange_location_mic_list
 
-    def all_tracking_stocks(self):
+    def all_tracking_stocks(self, exchange_location_mic):
+        '''
+        数据库中，某交易所，全部需要被收集估值信息的股票
+        :param exchange_location_mic: 交易所MIC码（如 XSHG, XSHE，XHKG）均可， 大小写均可
+        :return:
+        '''
         # 数据库中，全部需要被收集估值信息的股票
         # 输出： 需要被收集估值信息的股票代码，股票名称，上市地代码的字典
         # 如 [{'stock_code': '002688', 'stock_name': '金河生物', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
@@ -63,7 +75,11 @@ class CollectStockHistoricalEstimationInfo:
         #     {'stock_code': '002234', 'stock_name': '民和股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
         #     {'stock_code': '00700', 'stock_name': '腾讯控股', 'exchange_location': 'hk', 'exchange_location_mic': 'XHKG'},,, , , ]
 
-        selecting_sql = "SELECT DISTINCT stock_code, stock_name, exchange_location, exchange_location_mic FROM all_tracking_stocks_rf"
+        # 统一处理为大写
+        exchange_location_mic = exchange_location_mic.upper()
+
+        selecting_sql = """SELECT DISTINCT stock_code, stock_name, exchange_location, exchange_location_mic 
+                            FROM all_tracking_stocks_rf where exchange_location_mic = '%s' """ % (exchange_location_mic)
         all_tracking_stock_dict = db_operator.DBOperator().select_all("target_pool", selecting_sql)
         # stock_codes_names_dict 如  [{'stock_code': '002688', 'stock_name': '金河生物', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
         # {'stock_code': '603696', 'stock_name': '安记食品', 'exchange_location': 'sh', 'exchange_location_mic': 'XSHG'},
@@ -71,37 +87,56 @@ class CollectStockHistoricalEstimationInfo:
         # {'stock_code': '00700', 'stock_name': '腾讯控股', 'exchange_location': 'hk', 'exchange_location_mic': 'XHKG'},,, , , ]
         return all_tracking_stock_dict
 
-    def all_tracking_stocks_counter(self):
-        # 数据库中，全部需要被收集估值信息的股票的统计数
-        # 输出： 统计数
-        # 如 108
-        selecting_sql = "SELECT count(DISTINCT stock_code) as counter FROM all_tracking_stocks_rf"
+    def all_tracking_stocks_counter(self,exchange_location_mic):
+        '''
+        数据库中，某交易所，全部需要被收集估值信息的股票的统计数
+         :param exchange_location_mic: 交易所MIC码（如 XSHG, XSHE，XHKG）均可， 大小写均可
+        :return: 统计数，如 108
+        '''
+        # 统一处理为大写
+        exchange_location_mic = exchange_location_mic.upper()
+
+        selecting_sql = """SELECT count(DISTINCT stock_code) as counter FROM all_tracking_stocks_rf 
+                            where exchange_location_mic = '%s' """ % (exchange_location_mic)
         stock_codes_counter = db_operator.DBOperator().select_one("target_pool", selecting_sql)
         return stock_codes_counter['counter']
 
-    def paged_demanded_stocks(self, page, size):
-        # 根据分页信息获取哪些股票需要被收集估值信息
-        # param: page, 分页的页码
-        # param: size, 每页条数
-        # return: 返回该页的 股票代码，股票名称，上市地代码 字典
+    def paged_demanded_stocks(self, exchange_location_mic, page, size):
+        '''
+        根据分页信息获取,某个交易所，哪些股票需要被收集估值信息
+        :param exchange_location_mic: 交易所MIC码（如 XSHG, XSHE，XHKG）均可， 大小写均可
+        :param page: 分页的页码
+        :param size: 每页条数
+        :return: 返回该页的 股票代码，股票名称，上市地代码 字典
         # 如：{{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
         # '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
         # '000031': {'stock_code': '000031', 'stock_name': '大悦城', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
         # ,,,,}
+        '''
+
+        # 统一处理为大写
+        exchange_location_mic = exchange_location_mic.upper()
 
         start_row = page*size
-        selecting_sql = "SELECT DISTINCT stock_code, stock_name, exchange_location, exchange_location_mic FROM all_tracking_stocks_rf order by stock_code limit %d,%d " % (start_row,size)
+        selecting_sql = """SELECT DISTINCT stock_code, stock_name, exchange_location, exchange_location_mic 
+                            FROM all_tracking_stocks_rf where exchange_location_mic = '%s' 
+                            order by stock_code limit %d,%d """ % (exchange_location_mic,start_row,size)
         paged_stock_info = db_operator.DBOperator().select_all("target_pool", selecting_sql)
         paged_stock_code_info_dict = dict()
         for piece in paged_stock_info:
             paged_stock_code_info_dict[piece["stock_code"]] = piece
         return paged_stock_code_info_dict
 
-    def page_counter_by_page_size_per_page(self):
-        # 按X个为一页，将总的股票个数分成多页
-        # return: 需要被分成多少页
-        # 如：3
-        stock_codes_total_counter = self.all_tracking_stocks_counter()
+    def page_counter_by_page_size_per_page(self,exchange_location_mic):
+        '''
+        按X个为一页，将总的股票个数分成多页
+        :param exchange_location_mic: 交易所MIC码（如 XSHG, XSHE，XHKG）均可， 大小写均可
+        :return: 需要被分成多少页, 如：3
+        '''
+
+        # 统一处理为大写
+        exchange_location_mic = exchange_location_mic.upper()
+        stock_codes_total_counter = self.all_tracking_stocks_counter(exchange_location_mic)
 
         # 如果分页后，有余数（即未满一页的）
         if stock_codes_total_counter%self.page_size > 0:
@@ -117,32 +152,32 @@ class CollectStockHistoricalEstimationInfo:
         # 输出：理杏仁的token
         return get_conf_info.GetConfInfo().get_lxr_token()
 
-    def tell_exchange_market_and_determine_url(self, exchange_location):
+    def tell_exchange_market_and_determine_url(self, exchange_location_mic):
         '''
         # 判断股票属于哪个交易市场，并决定使用哪个基本面数据URL
-        :param exchange_location: 上市地代码(如 sh,sz,hk ) 或 上市地MIC码（如 XSHG, XSHE，XHKG）均可
+        :param exchange_location_mic: 交易所MIC码（如 XSHG, XSHE，XHKG）均可， 大小写均可
         :return: 使用理杏仁哪个URL来获取数据
         '''
 
         # 上市地代码或mic码，转为大写
-        exchange_location = exchange_location.upper()
+        exchange_location_mic = exchange_location_mic.upper()
 
         # 如果为 上海，上交所，深圳，深交所
-        if(exchange_location=='SH' or exchange_location=='SZ' or exchange_location=='XSHG' or exchange_location=='XSHE'):
+        if(exchange_location_mic=='XSHG' or exchange_location_mic=='XSHE'):
             return 'https://open.lixinger.com/api/cn/company/fundamental/non_financial'
         # 如果为 香港，港交所
-        elif (exchange_location=='HK' or exchange_location=='XHKG'):
+        elif (exchange_location_mic=='XHKG'):
             return 'https://open.lixinger.com/api/hk/company/fundamental/non_financial'
         else:
             # 日志记录失败
-            msg = exchange_location + ' 该上市地代码不可用'
+            msg = exchange_location_mic + ' 该交易所MIC码不可用'
             custom_logger.CustomLogger().log_writter(msg, 'error')
             return 'Unavailable Market Code'
 
-    def tell_exchange_market_and_determine_what_estimations_need_to_get(self, exchange_location):
+    def tell_exchange_market_and_determine_what_estimations_need_to_get(self, exchange_location_mic):
         '''
         # 判断股票属于哪个交易市场，并决定需要获取哪些指标
-        :param exchange_location: 上市地代码(如 sh,sz,hk ) 或 上市地MIC码（如 XSHG, XSHE，XHKG）均可
+        :param exchange_location_mic: 交易所MIC码（如 XSHG, XSHE，XHKG）均可， 大小写均可
         :return:
         # 接口参数，PE-TTM :pe_ttm
         # PE-TTM(扣非) :d_pe_ttm
@@ -174,25 +209,26 @@ class CollectStockHistoricalEstimationInfo:
         ["pe_ttm", "pb", "ps_ttm", "pcf_ttm", "dyr", "sp", "tv", "fc_rights", "bc_rights", "lxr_fc_rights", "shn", "mc"]
         '''
         # 上市地代码或mic码，转为大写
-        exchange_location = exchange_location.upper()
-        # 如果为 上海，上交所，深圳，深交所
-        if (exchange_location == 'SH' or exchange_location == 'SZ' or exchange_location == 'XSHG' or exchange_location == 'XSHE'):
+        exchange_location_mic = exchange_location_mic.upper()
+        # 如果为上交所，深交所
+        if (exchange_location_mic == 'XSHG' or exchange_location_mic == 'XSHE'):
             return ["pe_ttm", "d_pe_ttm", "pb", "pb_wo_gw", "ps_ttm", "pcf_ttm", "ev_ebit_r", "ey", "dyr", "sp", "tv",
                      "fc_rights", "bc_rights", "lxr_fc_rights", "shn", "mc", "cmc", "ecmc", "ecmc_psh", "fb", "sb",
                      "ha_shm"]
-        # 如果为 香港，港交所
-        elif (exchange_location == 'HK' or exchange_location == 'XHKG'):
+        # 如果为 港交所
+        elif (exchange_location_mic == 'XHKG'):
             return ["pe_ttm", "pb", "ps_ttm", "pcf_ttm", "dyr", "sp", "tv", "fc_rights", "bc_rights", "lxr_fc_rights", "mc"]
         else:
             # 日志记录失败
-            msg = exchange_location + ' 该上市地代码不可用'
+            msg = exchange_location_mic + ' 该上市地代码不可用'
             custom_logger.CustomLogger().log_writter(msg, 'error')
             return 'Unavailable Market Code'
 
-    def collect_a_period_time_estimation(self, stock_info_dict, start_date, end_date):
-        # 调取理杏仁接口，获取一段时间范围内，该股票估值数据, 并储存
+    def collect_a_period_time_estimation(self, stock_code, stock_info_dict, start_date, end_date):
+        # 调取理杏仁接口，获取单个股票一段时间范围内，该股票估值数据, 并储存
+        # param: stock_code, 股票代码, 如 000001
         # param:  stock_info_dict 股票代码,名称,上市地 字典, 只能1支股票，
-        #         如  {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}
+        #         如  {'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
         # param:  start_date, 开始时间，如 2020-11-12
         # param:  end_date, 结束时间，默认为空，如 2020-11-13
         # 输出： 将获取到股票估值数据存入数据库
@@ -203,15 +239,15 @@ class CollectStockHistoricalEstimationInfo:
         headers = {'Content-Type': 'application/json'}
         # 判断股票属于哪个交易市场，并决定使用理杏仁哪个获取基本面数据URL
         # 理杏仁 获取基本面数据 接口
-        url = self.tell_exchange_market_and_determine_url(stock_info_dict.get('exchange_location'))
+        url = self.tell_exchange_market_and_determine_url(stock_info_dict.get(stock_code).get('exchange_location'))
         # 判断股票属于哪个交易市场，并决定需要获取哪些指标
-        estimations_list = self.tell_exchange_market_and_determine_what_estimations_need_to_get(stock_info_dict.get('exchange_location'))
+        estimations_list = self.tell_exchange_market_and_determine_what_estimations_need_to_get(stock_info_dict.get(stock_code).get('exchange_location'))
 
         parms = {"token": token,
                  "startDate": start_date,
                  "endDate": end_date,
                  "stockCodes":
-                     [stock_info_dict.get("stock_code")],
+                     [stock_code],
                  "metricsList": estimations_list}
         # 日志记录
         #msg = '向理杏仁请求的接口参数 ' + str(parms)
@@ -231,25 +267,27 @@ class CollectStockHistoricalEstimationInfo:
         if 'error' in content and content.get('error').get('message') == "Illegal token.":
             # 日志记录失败
             msg = '使用无效TOKEN ' + token + ' ' + '执行函数collect_a_special_date_estimation时失败 ' + \
-                  str(stock_info_dict.get('stock_code')) + ' ' +str(stock_info_dict.get('stock_name')) + ' ' + start_date + ' ' + end_date
+                  stock_code + ' ' +str(stock_info_dict.get(stock_code).get('stock_name')) + ' ' + start_date + ' ' + end_date
             custom_logger.CustomLogger().log_writter(msg, 'error')
-            return self.collect_a_period_time_estimation(stock_info_dict, start_date, end_date)
+            return self.collect_a_period_time_estimation(stock_code, stock_info_dict, start_date, end_date)
 
         try:
             # 数据存入数据库
-            # TODO save_content_into_db 需要修改
             self.save_content_into_db(content, stock_info_dict, "period")
         except Exception as e:
             # 日志记录失败
             msg = '数据存入数据库失败。 ' + '理杏仁接口返回为 '+str(content) + '。 抛错为 '+ str(e) + ' 使用的Token为' + token
             custom_logger.CustomLogger().log_writter(msg, 'error')
 
-
-    def collect_a_special_date_estimation(self, stock_codes_names_dict, date):
+    # TODO 此处之上的函数均已修正，此处以下的函数仍需修改及验证
+    def collect_a_special_date_estimation(self, stock_info_dicts, date):
         # 调取理杏仁接口，获取特定一天，一只/多支股票估值数据, 并储存
-        # param:  stock_codes_names_dict 股票代码名称字典, 可以多支股票， 如  {"000568":"泸州老窖", "000596":"古井贡酒",,,}
+        # param:  stock_info_dicts 股票代码,名称,上市地 字典, 1/多支股票，
+        #         如  {{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
+        #         # '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},,,,}
         # param:  date, 日期，如 2020-11-12
         # 输出： 将获取到股票估值数据存入数据库
+
 
         # 随机获取一个token
         token = self.get_lxr_token()
@@ -283,7 +321,7 @@ class CollectStockHistoricalEstimationInfo:
         parms = {"token": token,
                  "date": date,
                  "stockCodes":
-                     list(stock_codes_names_dict.keys()),
+                     list(stock_info_dicts.keys()),
                  "metricsList": [
                      "pe_ttm", "d_pe_ttm", "pb", "pb_wo_gw", "ps_ttm", "pcf_ttm", "ev_ebit_r", "ey", "dyr", "sp", "tv",
                      "fc_rights", "bc_rights", "lxr_fc_rights", "shn", "mc", "cmc", "ecmc", "ecmc_psh", "fb", "sb",
@@ -336,27 +374,33 @@ class CollectStockHistoricalEstimationInfo:
     def save_content_into_db(self, content, stock_codes_names_dict, range):
         # 将 理杏仁接口返回的数据 存入数据库
         # param:  content, 理杏仁接口返回的数据
-        # param:  stock_codes_names_dict 股票代码名称字典, 可以1支/多支股票， 如  {"000568":"泸州老窖", "000596":"古井贡酒",,,}
+        # param:  stock_codes_names_dict 股票代码名称字典, 可以1支/多支股票，
+        # 如  {{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
+        #      '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
         # param： range， 时间范围，只能填 period 或者 date
 
         # 解析返回的数据
         for piece in content["data"]:
             stock_code = piece['stockCode']
-            stock_name = stock_codes_names_dict[stock_code]
+            stock_name = stock_codes_names_dict.get(stock_code).get("stock_name")
             date = piece['date'][:10]
+            # 上市地
+            exchange_location = stock_codes_names_dict.get(stock_code).get("exchange_location")
+            # 交易所mic码
+            exchange_location_mic = stock_codes_names_dict.get(stock_code).get("exchange_location_mic")
 
             # 检查记录是否已在数据库中存在
             is_data_existing = self.is_existing(stock_code, stock_name, date)
             # 如果已存在，且获取的是，一只股在一段时间内的估值数据，则循环截止,不需要收集这一天和往前日期的数据
             if is_data_existing and range=="period":
                 # 日志记录
-                msg = date + " "+stock_code + " "+ stock_name+ '\'s info has already existed, there is no need to save it and the previous date again. '
+                msg = stock_code + " "+ stock_name+ "在"+ date+" 之前的估值数据已经存在，无需再存此日期之前的数据。"
                 custom_logger.CustomLogger().log_writter(msg, 'info')
                 break
             # 如果已存在，且获取的是，一/多只股在特定日期的估值数据，则停止收集该只数据，切换至下一个
             elif is_data_existing and range=="date":
                 # 日志记录
-                msg = date + " " + stock_code + " " + stock_name + '\'s info has already existed, there is no need to save it again. '
+                msg = stock_code + " " + stock_name + date + "的估值数据已经存在，无需再存此日期的数据。"
                 custom_logger.CustomLogger().log_writter(msg, 'info')
                 continue
 
@@ -385,8 +429,8 @@ class CollectStockHistoricalEstimationInfo:
             stock_connect_holding_amount = piece.setdefault('ha_shm', 0)
 
             # 存入数据库
-            inserting_sql = "INSERT INTO stocks_main_estimation_indexes_historical_data (stock_code, stock_name, date, pe_ttm,pe_ttm_nonrecurring,pb,pb_wo_gw,ps_ttm,pcf_ttm,ev_ebit,stock_yield,dividend_yield,share_price,turnover,fc_rights,bc_rights,lxr_fc_rights,shareholders,market_capitalization,circulation_market_capitalization,free_circulation_market_capitalization,free_circulation_market_capitalization_per_capita,financing_balance,securities_balances,stock_connect_holding_amount ) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s' )" % (
-            stock_code, stock_name, date, pe_ttm, pe_ttm_nonrecurring, pb, pb_wo_gw, ps_ttm, pcf_ttm, ev_ebit,
+            inserting_sql = "INSERT IGNORE INTO stocks_main_estimation_indexes_historical_data (stock_code, stock_name, date, exchange_location, exchange_location_mic, pe_ttm,pe_ttm_nonrecurring,pb,pb_wo_gw,ps_ttm,pcf_ttm,ev_ebit,stock_yield,dividend_yield,share_price,turnover,fc_rights,bc_rights,lxr_fc_rights,shareholders,market_capitalization,circulation_market_capitalization,free_circulation_market_capitalization,free_circulation_market_capitalization_per_capita,financing_balance,securities_balances,stock_connect_holding_amount ) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s' )" % (
+            stock_code, stock_name, date, exchange_location, exchange_location_mic, pe_ttm, pe_ttm_nonrecurring, pb, pb_wo_gw, ps_ttm, pcf_ttm, ev_ebit,
             stock_yield, dividend_yield, share_price, turnover, fc_rights, bc_rights, lxr_fc_rights, shareholders,
             market_capitalization, circulation_market_capitalization, free_circulation_market_capitalization,
             free_circulation_market_capitalization_per_capita, financing_balance, securities_balances,
@@ -397,7 +441,6 @@ class CollectStockHistoricalEstimationInfo:
         #msg = str(stock_codes_names_dict) + '\'s estimation info has been saved '
         #custom_logger.CustomLogger().log_writter(msg, 'info')
 
-    # todo 这一步可以省略，通过 insert ignore into stocks_main_estimation_indexes_historical_data
     def is_existing(self, stock_code, stock_name, date):
         # 检查数据库中是否有记录，主要是检查是否为同一支股票同一日期
         # param: stock_code, 股票代码
@@ -514,6 +557,7 @@ class CollectStockHistoricalEstimationInfo:
         # 并决定是 同时收集多只股票特定日期的数据 还是 分多次收集个股票一段时间的数据
         # param: start_date, 起始日期，如 2010-01-02
 
+        # TODO， 获取所有交易所代码，按交易所逐个收集股票估值信息
         # 当前数据库中，待收集的股票代码和名称
         all_stock_codes_names_dict = self.all_tracking_stocks()
 
@@ -559,22 +603,25 @@ class CollectStockHistoricalEstimationInfo:
 if __name__ == "__main__":
     time_start = time.time()
     go = CollectStockHistoricalEstimationInfo()
+    #result = go.get_all_exchange_locaiton_mics()
     #result = go.get_lxr_token()
     #print(result)
-    #stock_codes_names_dict = go.all_tracking_stocks()
+    #result = go.all_tracking_stocks("XHKG")
     #print(stock_codes_names_dict)
-    go.collect_a_period_time_estimation({"stock_code": "00700", "stock_name": "腾讯控股", "exchange_location": "hk", "exchange_location_mic": "XHKG"}, "2022-04-01", "2022-04-09")
+    #go.collect_a_period_time_estimation("00700", {"00700":{"stock_code": "00700", "stock_name": "腾讯控股", "exchange_location": "hk", "exchange_location_mic": "XHKG"}}, "2022-04-01", "2022-04-11")
     #go.collect_a_special_date_estimation({"000568":"泸州老窖", "000596":"古井贡酒"}, "2020-11-09")
     # print(content)
     #go.collect_all_new_stocks_info_at_one_time()
     #result = go.is_existing("000568", "泸州老窖", "2020-11-19")
     #print(result)
     # go.main("2010-01-01")
-    # print(go.all_tracking_stocks_counter())
+    #print(go.all_tracking_stocks_counter("XHKG"))
     #go.latest_collection_date("2021-04-01")
     #go.test_date_loop()
-    #result = go.paged_demanded_stocks(2,80)
-    #result = go.tell_exchange_market_and_determine_url(exchange_location='sz')
-    #print(result)
+    #result = go.paged_demanded_stocks("XSHE",0,80)
+    #result = go.tell_exchange_market_and_determine_url("XHKG")
+    #result = go.page_counter_by_page_size_per_page("XSHG")
+    result = go.tell_exchange_market_and_determine_what_estimations_need_to_get("XHKG")
+    print(result)
     time_end = time.time()
     print('Time Cost: ' + str(time_end - time_start))
