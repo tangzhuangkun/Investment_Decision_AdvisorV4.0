@@ -50,7 +50,7 @@ class CollectStockHistoricalEstimationInfo:
         self.today = time.strftime("%Y-%m-%d", time.localtime())
         # 收集数据的起始日期
         # TODO 检查 所有 start_date用法
-        self.start_date = "2010-01-02"
+        self.start_date = "2010-01-01"
 
     def get_all_exchange_locaiton_mics(self):
         '''
@@ -513,7 +513,7 @@ class CollectStockHistoricalEstimationInfo:
 
     def collect_all_new_stocks_info_at_one_time(self, start_date, stock_codes_names_dict):
         # 将所有新的，且需要被收集估值信息的股票，一次性收集数据
-        # param: start_date, 起始日期，如 2010-01-02
+        # param: start_date, 起始日期，如 2010-01-01
         # param: stock_codes_names_dict 股票代码名称字典, 可以1支/多支股票， 如  {"000568":"泸州老窖", "000596":"古井贡酒",,,}
 
         # 遍历股票
@@ -524,7 +524,7 @@ class CollectStockHistoricalEstimationInfo:
 
     def collect_all_new_stocks_info_at_one_time_in_batch(self,start_date):
         # 分批次，将所有新的，且需要被收集估值信息的股票，从起始日期开始，全部收集
-        # param: start_date, 起始日期，如 2010-01-02
+        # param: start_date, 起始日期，如 2010-01-01
 
         # 总共需要将采集的股票数分成多少页，即分成多少批次
         page_counter = self.page_counter_by_page_size_per_page()
@@ -561,7 +561,7 @@ class CollectStockHistoricalEstimationInfo:
             custom_logger.CustomLogger().log_writter(msg, 'error')
 
     def collect_stocks_recent_info_in_batch(self, start_date):
-        # param: start_date, 起始日期，如 2010-01-02
+        # param: start_date, 起始日期，如 2010-01-01
         # 分批次，收集当前所有股票最近的信息
 
         plus_one_day = datetime.timedelta(days=1)
@@ -583,7 +583,7 @@ class CollectStockHistoricalEstimationInfo:
         '''
         # 获取数据库中最新收集股票估值信息的日期
         # 返回 如果数据库有最新的日期，则返回最新收集股票估值信息的日期，类型为datetime.date， 如 2021-05-14
-        #     如果数据库无最新的日期，返回起始日期的前一天, 如 2010-01-02 的前一天 2010-01-01
+        #     如果数据库无最新的日期，返回起始日期 2010-01-01
         :return:
         '''
 
@@ -591,9 +591,8 @@ class CollectStockHistoricalEstimationInfo:
         latest_collection_date = db_operator.DBOperator().select_one("financial_data", selecting_sql)
         # 如果数据库无最新的日期，为空
         if latest_collection_date['date'] == None:
-            plus_one_day = datetime.timedelta(days=1)
-            # 返回起始日期的前一天，后续才能从 起始日期开始处理
-            return datetime.date(int(self.start_date[:4]),int(self.start_date[5:7]),int(self.start_date[8:10]))-plus_one_day
+            # 返回起始日期，2010-01-01
+            return self.start_date
         return latest_collection_date['date']
 
     def test_date_loop(self):
@@ -611,7 +610,7 @@ class CollectStockHistoricalEstimationInfo:
     def main(self):
         # 与上次数据库中待收集的股票代码和名称对比，
         # 并决定是 同时收集多只股票特定日期的数据 还是 分多次收集个股票一段时间的数据
-        # param: start_date, 起始日期，如 2010-01-02
+        # param: start_date, 起始日期，如 2010-01-01
 
 
         # 获取所有跟踪股票的交易所代码，按交易所逐个收集股票估值信息
@@ -622,32 +621,41 @@ class CollectStockHistoricalEstimationInfo:
         # 遍历交易所代码
         for exchange_location_mic in all_exchange_locaiton_mics:
 
-            # 某个交易所，需要被跟踪, 但暂时不在数据库中的股票个数
-            not_saved_stocks_info_counter = self.the_stocks_that_not_in_db_counter(exchange_location_mic,latest_collection_date)
-            # 如果存在 未被跟踪的股票, 则挨个，从 开始日期（2010-01-02）收集至今
-            if not_saved_stocks_info_counter>0:
-                # not_saved_stocks_info 如
-                # [{'stock_code': '000858', 'stock_name': '五粮液', 'exchange_location_mic': 'XSHE'},
-                # {'stock_code': '002714', 'stock_name': '牧原股份', 'exchange_location_mic': 'XSHE'},，，，]
-                not_saved_stocks_info = self.the_stocks_that_not_in_db(exchange_location_mic, latest_collection_date)
-                # stock_info, 如 {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}
-                for stock_info in not_saved_stocks_info:
-                    # stock_info_dict 股票代码, 名称, 上市地 字典, 只能1支股票，
-                    #  如  {'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
-                    stock_code = stock_info.get("stock_code")
-                    stock_info_dict = {stock_code : stock_info}
-                    self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.start_date, self.today, exchange_location_mic)
+            # 如果最新收集日期与起始日期（2010-01-01）， 说明数据库为空，所有都需要从头开始收集
+            if(latest_collection_date==self.start_date):
+                # todo
+                pass
 
-            # 某个交易所，获取数据库中已有的, 且也是那些需要被跟踪的股票的个数
-            saved_stocks_info_counter = self.the_stocks_that_already_in_db_counter(exchange_location_mic,latest_collection_date)
-            if saved_stocks_info_counter>0:
-                # 如果少于 每次向杏理仁请求数据时，每次申请的条数
-                if saved_stocks_info_counter < self.page_size:
-                    # 不需要分页处理, 直接 collect special_date
-                    pass
-                else:
-                    # 需要分页处理
-                    pass
+            else:
+
+                # 某个交易所，需要被跟踪, 但暂时不在数据库中的股票个数
+                not_saved_stocks_info_counter = self.the_stocks_that_not_in_db_counter(exchange_location_mic,latest_collection_date)
+                # 如果存在 未被跟踪的股票, 则挨个，从 开始日期（2010-01-01）收集至今
+                if not_saved_stocks_info_counter>0:
+                    # not_saved_stocks_info 如
+                    # [{'stock_code': '000858', 'stock_name': '五粮液', 'exchange_location_mic': 'XSHE'},
+                    # {'stock_code': '002714', 'stock_name': '牧原股份', 'exchange_location_mic': 'XSHE'},，，，]
+                    not_saved_stocks_info = self.the_stocks_that_not_in_db(exchange_location_mic, latest_collection_date)
+                    # stock_info, 如 {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}
+                    for stock_info in not_saved_stocks_info:
+                        # stock_info_dict 股票代码, 名称, 上市地 字典, 只能1支股票，
+                        #  如  {'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
+                        stock_code = stock_info.get("stock_code")
+                        stock_info_dict = {stock_code : stock_info}
+                        self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.start_date, self.today, exchange_location_mic)
+
+                # 某个交易所，获取数据库中已有的, 且也是那些需要被跟踪的股票的个数
+                saved_stocks_info_counter = self.the_stocks_that_already_in_db_counter(exchange_location_mic,latest_collection_date)
+                if saved_stocks_info_counter>0:
+                    # 如果少于 每次向杏理仁请求数据时，每次申请的条数
+                    if saved_stocks_info_counter < self.page_size:
+                        # 不需要分页处理, 直接 collect special_date
+                        # todo
+                        pass
+                    else:
+                        # 需要分页处理
+                        # todo
+                        pass
 
 
             # 该交易所，数据库中有信息的股票，需要从 max_date 开始至今收集
