@@ -49,9 +49,9 @@ group by trading_year) raw_two
 
 '''
 -- 获取股票，股票名称，最新日期，市净率，市净率低估排名，共有该股票多少交易日记录，当前市净率位于历史百分比位置
-select raw.stock_code, raw.stock_name, raw.date, raw.pb, raw.rank_num, record.total_record, raw.percent_num from 
+select raw.stock_code, raw.stock_name, raw.date, raw.pb, raw.row_num, record.total_record, raw.percent_num from 
 (select stock_code, stock_name, date, pb,
-rank() OVER (partition by stock_code ORDER BY pb asc) AS rank_num,  
+row_number() OVER (partition by stock_code ORDER BY pb asc) AS row_num,  
 percent_rank() OVER (partition by stock_code ORDER BY pb asc) AS percent_num
 from stocks_main_estimation_indexes_historical_data) raw
 left join 
@@ -91,9 +91,9 @@ order by raw.percent_num asc;
 
 '''
 -- 获取股票，股票名称，最新日期，扣非市盈率率，扣非市盈率率低估排名，共有该股票多少交易日记录，当前扣非市盈率率位于历史百分比位置
-select raw.stock_code, raw.stock_name, raw.date, raw.pe_ttm_nonrecurring, raw.rank_num, record.total_record, raw.percent_num from
+select raw.stock_code, raw.stock_name, raw.date, raw.pe_ttm_nonrecurring, raw.row_num, record.total_record, raw.percent_num from
 (select stock_code, stock_name, date, pe_ttm_nonrecurring,
-rank() OVER (partition by stock_code ORDER BY pe_ttm_nonrecurring asc) AS rank_num,
+row_number() OVER (partition by stock_code ORDER BY pe_ttm_nonrecurring asc) AS row_num,
 percent_rank() OVER (partition by stock_code ORDER BY pe_ttm_nonrecurring asc) AS percent_num
 from stocks_main_estimation_indexes_historical_data) raw
 left join
