@@ -51,6 +51,8 @@ class CollectStockHistoricalEstimationInfo:
         # 收集数据的起始日期
         # TODO 检查 所有 start_date用法
         self.start_date = "2010-01-01"
+        # TODO  exchange_location_mic = exchange_location_mic.upper(), 使用上下文处理
+        # TODO  增加日志
 
     def get_all_exchange_locaiton_mics(self):
         '''
@@ -129,8 +131,8 @@ class CollectStockHistoricalEstimationInfo:
                             and exchange_location_mic = '%s' ) his
                             on his.stock_code = tar.stock_code
                             and his.exchange_location_mic = tar.exchange_location_mic """ % (exchange_location_mic, latest_collection_date, exchange_location_mic)
-        saved_stocks_info = db_operator.DBOperator().select_all("target_pool", selecting_sql)
-        return saved_stocks_info
+        saved_stock_info_list = db_operator.DBOperator().select_all("target_pool", selecting_sql)
+        return saved_stock_info_list
 
     def the_stocks_that_already_in_db_counter(self, exchange_location_mic, latest_collection_date):
         '''
@@ -169,8 +171,8 @@ class CollectStockHistoricalEstimationInfo:
                             on his.stock_code = tar.stock_code
                             and his.exchange_location_mic = tar.exchange_location_mic
                             where his.stock_code is null""" % (exchange_location_mic, latest_collection_date, exchange_location_mic)
-        not_saved_stocks_info = db_operator.DBOperator().select_all("target_pool", selecting_sql)
-        return not_saved_stocks_info
+        not_saved_stock_info_list = db_operator.DBOperator().select_all("target_pool", selecting_sql)
+        return not_saved_stock_info_list
 
 
     def the_stocks_that_not_in_db_counter(self, exchange_location_mic, latest_collection_date):
@@ -621,10 +623,23 @@ class CollectStockHistoricalEstimationInfo:
         # 遍历交易所代码
         for exchange_location_mic in all_exchange_locaiton_mics:
 
-            # 如果最新收集日期与起始日期（2010-01-01）， 说明数据库为空，所有都需要从头开始收集
+            # 如果最新收集日期与起始日期（2010-01-01）， 说明数据库为空，所有都需要从头开始收集全部股票的数据
             if(latest_collection_date==self.start_date):
-                # todo
-                pass
+                # 数据库中，全部需要被收集估值信息的股票
+                # 需要被收集估值信息的股票代码，股票名称，上市地代码的字典
+                # 如 [{'stock_code': '002688', 'stock_name': '金河生物', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
+                #     {'stock_code': '603696', 'stock_name': '安记食品', 'exchange_location': 'sh', 'exchange_location_mic': 'XSHG'},
+                #     {'stock_code': '002234', 'stock_name': '民和股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
+                #     {'stock_code': '00700', 'stock_name': '腾讯控股', 'exchange_location': 'hk', 'exchange_location_mic': 'XHKG'},,, , , ]
+                exchange_location_stock_info_list = self.all_tracking_stocks(exchange_location_mic)
+                for stock_info in exchange_location_stock_info_list:
+                    # stock_info_dict 股票代码, 名称, 上市地 字典, 只能1支股票，
+                    #  如  {'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
+                    stock_code = stock_info.get("stock_code")
+                    stock_info_dict = {stock_code: stock_info}
+                    # 调取理杏仁接口，获取单个股票一段时间范围内，该股票估值数据, 并储存
+                    self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.start_date, self.today,
+                                                          exchange_location_mic)
 
             else:
 
@@ -635,13 +650,14 @@ class CollectStockHistoricalEstimationInfo:
                     # not_saved_stocks_info 如
                     # [{'stock_code': '000858', 'stock_name': '五粮液', 'exchange_location_mic': 'XSHE'},
                     # {'stock_code': '002714', 'stock_name': '牧原股份', 'exchange_location_mic': 'XSHE'},，，，]
-                    not_saved_stocks_info = self.the_stocks_that_not_in_db(exchange_location_mic, latest_collection_date)
+                    not_saved_stock_info_list = self.the_stocks_that_not_in_db(exchange_location_mic, latest_collection_date)
                     # stock_info, 如 {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}
-                    for stock_info in not_saved_stocks_info:
+                    for stock_info in not_saved_stock_info_list:
                         # stock_info_dict 股票代码, 名称, 上市地 字典, 只能1支股票，
                         #  如  {'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
                         stock_code = stock_info.get("stock_code")
                         stock_info_dict = {stock_code : stock_info}
+                        # 调取理杏仁接口，获取单个股票一段时间范围内，该股票估值数据, 并储存
                         self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.start_date, self.today, exchange_location_mic)
 
                 # 某个交易所，获取数据库中已有的, 且也是那些需要被跟踪的股票的个数
@@ -664,70 +680,7 @@ class CollectStockHistoricalEstimationInfo:
             # 每次向杏理仁请求数据时，每次申请的条数
             # self.page_size = 80
 
-            # def collect_a_period_time_estimation(self, stock_code, stock_info_dict, start_date, end_date, exchange_location_mic):
 
-            # 调取理杏仁接口，获取单个股票一段时间范围内，该股票估值数据, 并储存
-            # param: stock_code, 股票代码, 如 000001
-            # param:  stock_info_dict 股票代码,名称,上市地 字典, 只能1支股票，
-            #         如  {'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
-            # param:  start_date, 开始时间，如 2020-11-12
-            # param:  end_date, 结束时间，默认为空，如 2020-11-13
-            # :param exchange_location_mic: 交易所MIC码（如XSHG, XSHE，XHKG）均可， 大小写均可
-            # 输出： 将获取到股票估值数据存入数据库
-
-
-
-            """
-            for stock_info_dict in stock_info_dicts:
-                stock_code = stock_info_dict.get('stock_code')
-                exchange_location_mic = stock_info_dict.get('exchange_location_mic')
-                stock_info_dict = {stock_code:stock_info_dict}
-                print(stock_info_dict)
-                print(stock_code, exchange_location_mic)
-                print("__________")
-                self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.start_date, "2022-04-12", exchange_location_mic)
-            """
-
-
-        """
-        # 获取文件的当前路径（绝对路径）
-        cur_path = os.path.dirname(os.path.realpath(__file__))
-        # 获取comparison.json的路径
-        json_path = os.path.join(cur_path, 'comparison.json')
-        with open(json_path, 'r', encoding='utf-8') as com:
-            last_time_data = json.load(com)
-
-        # 如果待收集的内容与上次数据库中的一致
-        # 则只收集最近日期的
-        if all_stock_codes_names_dict == last_time_data["last_time_stock_codes_names_in_db_dict"]:
-            # 日志记录
-            msg = '无新增的股票，开始收集最近交易日的股票估值信息 '
-            custom_logger.CustomLogger().log_writter(msg, 'info')
-            self.collect_stocks_recent_info_in_batch(start_date)
-        # 如果不相同，则一次性收集所有数据
-        else:
-            # 日志记录
-            msg = '有新增的股票，开始收集从 '+start_date+' 到 '+self.today +' 的股票估值信息 '
-            custom_logger.CustomLogger().log_writter(msg, 'info')
-            self.collect_all_new_stocks_info_at_one_time_in_batch(start_date)
-            # 获取文件的当前路径（绝对路径）
-            cur_path = os.path.dirname(os.path.realpath(__file__))
-            # 获取comparison.json的路径
-            json_path = os.path.join(cur_path, 'comparison.json')
-            # 更新comparison文件中的记录
-            with open(json_path, 'w', encoding='utf-8') as com:
-                com.truncate()
-                new_data = dict()
-                new_data["last_time_stock_codes_names_in_db_dict"] = all_stock_codes_names_dict
-                com.write(json.dumps(new_data, ensure_ascii=False))
-            # 日志记录
-            msg = '更新 comparison.json 的内容 '
-            custom_logger.CustomLogger().log_writter(msg, 'info')
-
-        # 日志记录
-        msg = '已经收集了全部股票至今的历史估值信息'
-        custom_logger.CustomLogger().log_writter(msg, 'info')
-        """
 
 
 

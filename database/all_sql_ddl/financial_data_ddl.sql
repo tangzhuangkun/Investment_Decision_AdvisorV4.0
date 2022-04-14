@@ -88,11 +88,12 @@ CREATE TABLE IF NOT EXISTS `stocks_main_estimation_indexes_historical_data`(
 	`source` VARCHAR(20) NOT NULL COMMENT '数据来源',
 	`submission_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '提交时间',
 	UNIQUE INDEX (`stock_code`, `date`, `exchange_location_mic`),
+	INDEX (date),
 	PRIMARY KEY ( `id` )
 	)ENGINE=InnoDB DEFAULT CHARSET=utf8
 COMMENT '股票估值指标历史数据';
-/* 加索引*/
-ALTER TABLE stocks_main_estimation_indexes_historical_data ADD INDEX (date);
+/* 加索引 */
+/*  ALTER TABLE stocks_main_estimation_indexes_historical_data ADD INDEX (date); */
 
 
 /* --------- user：investor1 ------ */
