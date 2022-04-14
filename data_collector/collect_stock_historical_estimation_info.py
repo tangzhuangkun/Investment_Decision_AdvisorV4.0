@@ -665,9 +665,28 @@ class CollectStockHistoricalEstimationInfo:
                 if saved_stocks_info_counter>0:
                     # 如果少于 每次向杏理仁请求数据时，每次申请的条数
                     if saved_stocks_info_counter < self.page_size:
-                        # 不需要分页处理, 直接 collect special_date
-                        # todo
-                        pass
+                        # saved_stock_info_list 如，
+                        # [{'stock_code': '000858', 'stock_name': '五粮液', 'exchange_location_mic': 'XSHE'},
+                        # {'stock_code': '002714', 'stock_name': '牧原股份', 'exchange_location_mic': 'XSHE'},，，，]
+                        saved_stock_info_list = self.the_stocks_that_already_in_db(exchange_location_mic,latest_collection_date)
+                        saved_stock_info_dict = dict()
+                        for stock_info in saved_stock_info_list:
+                            stock_code = stock_info.get("stock_code")
+                            saved_stock_info_dict[stock_code] = stock_info
+
+                        plus_one_day = datetime.timedelta(days=1)
+                        # 数据库中的最大日期加一天
+                        start_date = self.latest_collection_date() + plus_one_day
+                        today_date = date.today()
+                        # 如果日期在今天及之前
+                        while start_date <= today_date:
+                            # 调取理杏仁接口，获取特定一天，一只/多支股票估值数据, 并储存
+                            # 此时 saved_stock_info_dict 如
+                            # {{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz','exchange_location_mic': 'XSHE'},
+                            # '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},,,,}
+                            # 不需要分页处理, 直接 collect special_date
+                            # TODO 此处需要测试
+                            self.collect_a_special_date_estimation(saved_stock_info_dict, start_date, exchange_location_mic)
                     else:
                         # 需要分页处理
                         # todo
@@ -680,8 +699,29 @@ class CollectStockHistoricalEstimationInfo:
             # 每次向杏理仁请求数据时，每次申请的条数
             # self.page_size = 80
 
+            # collect_a_special_date_estimation(self, stock_info_dicts, date, exchange_location_mic):
+            # 调取理杏仁接口，获取特定一天，一只/多支股票估值数据, 并储存
+            # param:  stock_info_dicts 股票代码,名称,上市地 字典, 1/多支股票，
+            #         如  {{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
+            #         # '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},,,,}
+            # param:  date, 日期，如 2020-11-12
+            # :param exchange_location_mic: 交易所MIC码（如XSHG, XSHE，XHKG）均可， 大小写均可
+            # 输出： 将获取到股票估值数据存入数据库
 
-
+            plus_one_day = datetime.timedelta(days=1)
+            start_date = self.latest_collection_date(start_date) + plus_one_day
+            today_date = date.today()
+            while start_date <= today_date:
+                # 总共需要将采集的股票数分成多少页，即分成多少批次
+                page_counter = self.page_counter_by_page_size_per_page()
+                # 日志记录
+                # msg = '共需收集 ' + str(page_counter) + ' 页的股票估值信息'
+                # custom_logger.CustomLogger().log_writter(msg, 'info')
+                for page in range(page_counter):
+                    stock_codes_names_dict_in_page = self.paged_demanded_stocks(page, self.page_size)
+                    # 收集当前页内所有股票特定日期的的信息
+                    self.collect_stocks_recent_info(stock_codes_names_dict_in_page, str(start_date))
+                start_date += plus_one_day
 
 
 
@@ -701,10 +741,10 @@ if __name__ == "__main__":
     #go.collect_all_new_stocks_info_at_one_time()
     #result = go.is_existing("000568", "泸州老窖", "2020-11-19")
     #print(result)
-    go.main()
+    #go.main()
     #print(go.all_tracking_stocks_counter("XHKG"))
     #go.latest_collection_date("2021-04-01")
-    #go.test_date_loop()
+    go.test_date_loop()
     #result = go.paged_demanded_stocks("XSHE",0,80)
     #result = go.tell_exchange_market_and_determine_url("XHKG")
     #result = go.page_counter_by_page_size_per_page("XSHG")
