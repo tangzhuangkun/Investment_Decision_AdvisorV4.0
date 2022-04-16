@@ -663,7 +663,6 @@ class CollectStockHistoricalEstimationInfo:
                                                           exchange_location_mic)
 
             else:
-
                 # 某个交易所，需要被跟踪, 但暂时不在数据库中的股票个数
                 not_saved_stocks_info_counter = self.the_stocks_that_not_in_db_counter(exchange_location_mic,latest_collection_date)
                 # 如果存在 未被跟踪的股票, 则挨个，从 开始日期（2010-01-01）收集至今
@@ -683,13 +682,14 @@ class CollectStockHistoricalEstimationInfo:
 
                 # 某个交易所，获取数据库中已有的, 且也是那些需要被跟踪的股票的个数
                 saved_stocks_info_counter = self.the_stocks_that_already_in_db_counter(exchange_location_mic,latest_collection_date)
+                # saved_stock_info_list 如，
+                # [{'stock_code': '000858', 'stock_name': '五粮液', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
+                # {'stock_code': '300146', 'stock_name': '汤臣倍健', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},，，，]
+                saved_stock_info_list = self.the_stocks_that_already_in_db(exchange_location_mic, latest_collection_date)
+
                 if saved_stocks_info_counter>0:
-                    # 如果少于 每次向杏理仁请求数据时，每次申请的条数
+                    # 如果少于 每次向杏理仁请求数据时
                     if saved_stocks_info_counter < self.page_size:
-                        # saved_stock_info_list 如，
-                        # [{'stock_code': '000858', 'stock_name': '五粮液', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
-                        # {'stock_code': '300146', 'stock_name': '汤臣倍健', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},，，，]
-                        saved_stock_info_list = self.the_stocks_that_already_in_db(exchange_location_mic,latest_collection_date)
                         saved_stock_info_dict = dict()
                         for stock_info in saved_stock_info_list:
                             stock_code = stock_info.get("stock_code")
@@ -700,41 +700,34 @@ class CollectStockHistoricalEstimationInfo:
                         self.collect_the_lacking_dates_estimation(saved_stock_info_dict, latest_collection_date,
                                                              exchange_location_mic)
                     else:
-                        # 需要分页处理
-                        # todo
-                        pass
+                        # 根据 每次申请的条数，需要分成多少次向杏理仁请求数据，一次性超过100条的话，会被理杏仁拒绝
 
-
-            # 该交易所，数据库中有信息的股票，需要从 max_date 开始至今收集
-            # collect_special_date
-
-            # 每次向杏理仁请求数据时，每次申请的条数
-            # self.page_size = 80
-
-            # collect_a_special_date_estimation(self, stock_info_dicts, date, exchange_location_mic):
-            # 调取理杏仁接口，获取特定一天，一只/多支股票估值数据, 并储存
-            # param:  stock_info_dicts 股票代码,名称,上市地 字典, 1/多支股票，
-            #         如  {{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
-            #         # '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},,,,}
-            # param:  date, 日期，如 2020-11-12
-            # :param exchange_location_mic: 交易所MIC码（如XSHG, XSHE，XHKG）均可， 大小写均可
-            # 输出： 将获取到股票估值数据存入数据库
-
-            # plus_one_day = datetime.timedelta(days=1)
-            # start_date = self.latest_collection_date(start_date) + plus_one_day
-            # today_date = date.today()
-            # while start_date <= today_date:
-            #     # 总共需要将采集的股票数分成多少页，即分成多少批次
-            #     page_counter = self.page_counter_by_page_size_per_page()
-            #     # 日志记录
-            #     # msg = '共需收集 ' + str(page_counter) + ' 页的股票估值信息'
-            #     # custom_logger.CustomLogger().log_writter(msg, 'info')
-            #     for page in range(page_counter):
-            #         stock_codes_names_dict_in_page = self.paged_demanded_stocks(page, self.page_size)
-            #         # 收集当前页内所有股票特定日期的的信息
-            #         self.collect_stocks_recent_info(stock_codes_names_dict_in_page, str(start_date))
-            #     start_date += plus_one_day
-
+                        # 如果总数除以每次申请条数有余数，则总页数需要多加一页
+                        if (saved_stocks_info_counter % self.page_size != 0):
+                            # 需要分成多少页数
+                            total_page_num = saved_stocks_info_counter // self.page_size + 1
+                        # 如果总数除以每次申请条数无余数，刚刚好
+                        else:
+                            # 需要分成多少页数
+                            total_page_num = saved_stocks_info_counter // self.page_size
+                        # 起始list的标码
+                        start_index = 0
+                        # 结束list的标码
+                        end_index = self.page_size
+                        # 遍历这些页码
+                        for page_num in range(total_page_num):
+                            saved_stock_info_list_piece = saved_stock_info_list[start_index:end_index]
+                            saved_stock_info_dict_piece = dict()
+                            for stock_info in saved_stock_info_list_piece:
+                                stock_code = stock_info.get("stock_code")
+                                saved_stock_info_dict_piece[stock_code] = stock_info
+                            # 此时 saved_stock_info_dict_piece 如
+                            # {{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz','exchange_location_mic': 'XSHE'},
+                            # '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},,,,}
+                            start_index = end_index
+                            end_index = end_index + self.page_size
+                            self.collect_the_lacking_dates_estimation(saved_stock_info_dict_piece, latest_collection_date,
+                                                                      exchange_location_mic)
 
 
 
