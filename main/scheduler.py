@@ -17,6 +17,7 @@ import data_collector.collect_index_weight_from_csindex_file as collect_index_we
 import data_collector.collect_index_weight_from_cnindex_interface as collect_index_weight_from_cnindex_interface
 import data_collector.collect_excellent_index_from_cs_index as collect_excellent_index_from_cs_index
 import data_collector.collect_excellent_index_from_cn_index as collect_excellent_index_from_cn_index
+import data_miner.gather_all_tracking_stocks as gather_all_tracking_stocks
 
 class Scheduler:
 	# 任务调度器，根据时间安排工作
@@ -62,6 +63,17 @@ class Scheduler:
 
 		#########  盘后(15:00-23:59)  #########
 		try:
+			# 每个交易日18：00 聚合汇总所有需要被跟踪的股票
+			scheduler.add_job(func=gather_all_tracking_stocks.GatherAllTrackingStocks().main,
+							  trigger='cron',
+							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18,
+							  id='gatherAllTrackingStocks')
+		except Exception as e:
+			# 抛错
+			custom_logger.CustomLogger().log_writter(e, 'error')
+
+
+		try:
 			# 每个交易日18：01收集交易日信息
 			scheduler.add_job(func=collect_trading_days.CollectTradingDays().main,
 							  trigger='cron',
@@ -103,7 +115,7 @@ class Scheduler:
 
 		try:
 			# 每个交易日18：05收集所需的股票的估值信息
-			scheduler.add_job(func=collect_stock_historical_estimation_info.CollectStockHistoricalEstimationInfo().main, args=('2010-01-02',),
+			scheduler.add_job(func=collect_stock_historical_estimation_info.CollectStockHistoricalEstimationInfo().main,
 							  trigger='cron',
 							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=5,
 							  id='weekdayCollectStockHistoricalEstimationInfo')
@@ -156,10 +168,10 @@ class Scheduler:
 			custom_logger.CustomLogger().log_writter(e, 'error')
 
 		try:
-			# 每月2号和17号，19：05, 从中证指数官网接口收集过去几年表现优异的指数
+			# 每月5号，19：05, 从中证指数官网接口收集过去几年表现优异的指数
 			scheduler.add_job(func=collect_excellent_index_from_cs_index.CollectExcellentIndexFromCSIndex().main,
 							  trigger='cron',
-							  month='1-12', day='2', hour=19, minute=5,
+							  month='1-12', day='5', hour=19, minute=5,
 							  id='collectCSExcellentIndicesTwiceAMonth')
 		except Exception as e:
 			# 抛错
