@@ -1,6 +1,6 @@
 
 /* 所有的来自投资标的池（含指数成分股和目标股）的股票' */
-INSERT INTO target_pool.all_tracking_stocks_from_target_indices_and_stocks_rf
+INSERT IGNORE INTO  target_pool.all_tracking_stocks_rf
     (stock_code, stock_name, exchange_location, exchange_location_mic)
 SELECT DISTINCT stock_code, stock_name, stock_exchange_location as exchange_location, stock_market_code as exchange_location_mic
 FROM financial_data.mix_top10_with_bottom_no_repeat
