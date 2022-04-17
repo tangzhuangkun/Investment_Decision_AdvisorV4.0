@@ -54,7 +54,6 @@ class CollectStockHistoricalEstimationInfo:
         self.today = time.strftime("%Y-%m-%d", time.localtime())
         # 收集数据的起始日期
         self.estimation_start_date = "2010-01-01"
-        # TODO  exchange_location_mic = exchange_location_mic.upper(), 使用上下文处理
 
     def get_all_exchange_locaiton_mics(self):
         '''
@@ -475,7 +474,6 @@ class CollectStockHistoricalEstimationInfo:
             # 交易所mic码
             exchange_location_mic = stock_info_dicts.get(stock_code).get("exchange_location_mic")
 
-            # TODO 已经使用 INSERT IGNORE INTO 进行插入， 下面检查是否有必要留，需要验证，以提高性能
             # 检查记录是否已在数据库中存在
             is_data_existing = self.is_existing(stock_code, stock_name, date)
             # 如果已存在，且获取的是，一只股在一段时间内的估值数据，则循环截止,不需要收集这一天和往前日期的数据
