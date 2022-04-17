@@ -49,8 +49,7 @@ class CollectStockHistoricalEstimationInfo:
         # 获取当前日期
         self.today = time.strftime("%Y-%m-%d", time.localtime())
         # 收集数据的起始日期
-        # TODO 检查 所有 start_date用法
-        self.start_date = "2010-01-01"
+        self.estimation_start_date = "2010-01-01"
         # TODO  exchange_location_mic = exchange_location_mic.upper(), 使用上下文处理
 
     def get_all_exchange_locaiton_mics(self):
@@ -103,6 +102,7 @@ class CollectStockHistoricalEstimationInfo:
                             where exchange_location_mic = '%s' """ % (exchange_location_mic)
         stock_codes_counter = db_operator.DBOperator().select_one("target_pool", selecting_sql)
         return stock_codes_counter['counter']
+
 
     def the_stocks_that_already_in_db(self, exchange_location_mic, latest_collection_date):
         '''
@@ -229,6 +229,19 @@ class CollectStockHistoricalEstimationInfo:
         else:
             page_counter = stock_codes_total_counter // self.page_size
         return page_counter
+
+    def get_stock_code_name(self, stock_info_dicts):
+        '''
+        获取 股票代码和名称的对应关系的简洁字典
+        :param stock_info_dicts: stock_info_dicts 股票代码,名称,上市地 字典, 1/多支股票，
+        #         如  {{'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
+        #         # '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},,,,}
+        :return: 返回如， {'000001': '平安银行', '000002': '万科A', '000031': '大悦城'}
+        '''
+        stock_code_name_dict = dict()
+        for stock_code in stock_info_dicts:
+            stock_code_name_dict[stock_code] = stock_info_dicts.get(stock_code).get('stock_name')
+        return stock_code_name_dict
 
     def get_lxr_token(self):
         # 随机获取一个理杏仁的token、
@@ -413,15 +426,26 @@ class CollectStockHistoricalEstimationInfo:
         if 'error' in content and content.get('error').get('message') == "Illegal token.":
             # 日志记录失败
             msg = '使用无效TOKEN ' + token + ' ' + '执行 collect_a_special_date_estimation 获取股票代码 ' + \
-                  str(list(stock_info_dicts.keys())) + ' ' + date + ' 时失败'
+                  str(list(stock_info_dicts.keys())) + ' ' + str(date) + ' 时失败'
             custom_logger.CustomLogger().log_writter(msg, 'error')
             return self.collect_a_special_date_estimation(stock_info_dicts, date, exchange_location_mic)
+
+        # 获取股票代码和名称的对应字典表
+        # 如 {'000001': '平安银行', '000002': '万科A', '000031': '大悦城'}
+        stock_code_name_dict = self.get_stock_code_name(stock_info_dicts)
+
+        # 理杏仁接口返回为空，即 该日期，1/多个股票 没有估值数据，可能是因为 非交易日等原因造成，不予以储存
+        if(len(content.get("data"))==0):
+            # 日志记录
+            msg = str(stock_code_name_dict) + " " + str(date)+" 的估值数据为空，不予以存储"
+            custom_logger.CustomLogger().log_writter(msg, 'info')
+            return
 
         try:
             # 数据存入数据库
             self.save_content_into_db(content, stock_info_dicts, "date")
             # 日志记录
-            msg = "收集了 " + exchange_location_mic + "." + str(list(stock_info_dicts.keys())) + " " + date + " 的估值数据"
+            msg = "已经收集了 " + exchange_location_mic + "." + str(stock_code_name_dict) + " " + str(date) + " 的估值数据"
             custom_logger.CustomLogger().log_writter(msg, 'info')
         except Exception as e:
             # 日志记录失败
@@ -598,7 +622,7 @@ class CollectStockHistoricalEstimationInfo:
         # 如果数据库无最新的日期，为空
         if latest_collection_date['date'] == None:
             # 返回起始日期，2010-01-01
-            return self.start_date
+            return self.estimation_start_date
         return latest_collection_date['date']
 
     def test_date_loop(self):
@@ -633,9 +657,7 @@ class CollectStockHistoricalEstimationInfo:
         while start_date <= today_date:
             # 调取理杏仁接口，获取特定一天，一只/多支股票估值数据, 并储存
             self.collect_a_special_date_estimation(saved_stock_info_dict, start_date, exchange_location_mic)
-            # 日志记录
-            msg = "已经收集了标的股票" + str(saved_stock_info_dict) + str(start_date) +" 的估值数据"
-            custom_logger.CustomLogger().log_writter(msg, 'info')
+            # 日期递增一天
             start_date += plus_one_day
 
 
@@ -653,7 +675,7 @@ class CollectStockHistoricalEstimationInfo:
         # 遍历交易所代码
         for exchange_location_mic in all_exchange_locaiton_mics:
             # 如果最新收集日期与起始日期（2010-01-01）， 说明数据库为空，所有都需要从头开始收集全部股票的数据
-            if(latest_collection_date==self.start_date):
+            if(latest_collection_date==self.estimation_start_date):
                 # 数据库中，全部需要被收集估值信息的股票
                 # 需要被收集估值信息的股票代码，股票名称，上市地代码的字典
                 # 如 [{'stock_code': '002688', 'stock_name': '金河生物', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'},
@@ -667,10 +689,10 @@ class CollectStockHistoricalEstimationInfo:
                     stock_code = stock_info.get("stock_code")
                     stock_info_dict = {stock_code: stock_info}
                     # 调取理杏仁接口，获取单个股票一段时间范围内，该股票估值数据, 并储存
-                    self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.start_date, self.today,
+                    self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.estimation_start_date, self.today,
                                                           exchange_location_mic)
                 # 日志记录
-                msg = "数据库中的估值数据为空，已经收集了所有标的股票从 " +self.start_date+" 至 "+ self.today +" 的估值数据"
+                msg = "数据库中的估值数据为空，已经收集了所有标的股票从 " +self.estimation_start_date+" 至 "+ str(self.today) +" 的估值数据"
                 custom_logger.CustomLogger().log_writter(msg, 'info')
 
             else:
@@ -688,12 +710,14 @@ class CollectStockHistoricalEstimationInfo:
                         #  如  {'000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
                         stock_code = stock_info.get("stock_code")
                         stock_info_dict = {stock_code : stock_info}
-                        # 调取理杏仁接口，获取单个股票一段时间范围内，该股票估值数据, 并储存
-                        self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.start_date, self.today, exchange_location_mic)
 
-                    # 日志记录
-                    msg = "已经收集了新增的标的股票" +str(not_saved_stock_info_list)+"  从 " + self.start_date + " 至 " + self.today + " 的估值数据"
-                    custom_logger.CustomLogger().log_writter(msg, 'info')
+                        # 日志记录
+                        msg = "有新增的标的股票" + str(stock_info) + "  需要收集从 " + self.estimation_start_date + " 至 " + str(self.today) + " 的估值数据"
+                        custom_logger.CustomLogger().log_writter(msg, 'info')
+
+                        # 调取理杏仁接口，获取单个股票一段时间范围内，该股票估值数据, 并储存
+                        self.collect_a_period_time_estimation(stock_code, stock_info_dict, self.estimation_start_date, self.today, exchange_location_mic)
+
 
                 # 某个交易所，获取数据库中已有的, 且也是那些需要被跟踪的股票的个数
                 saved_stocks_info_counter = self.the_stocks_that_already_in_db_counter(exchange_location_mic,latest_collection_date)
