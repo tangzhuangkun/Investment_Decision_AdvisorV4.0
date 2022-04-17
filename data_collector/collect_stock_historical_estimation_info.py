@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# author: Tang Zhuangkun
+
 import datetime
 from datetime import date
 
@@ -541,74 +545,6 @@ class CollectStockHistoricalEstimationInfo:
         else:
             return True
 
-    def collect_all_new_stocks_info_at_one_time(self, start_date, stock_codes_names_dict):
-        # 将所有新的，且需要被收集估值信息的股票，一次性收集数据
-        # param: start_date, 起始日期，如 2010-01-01
-        # param: stock_codes_names_dict 股票代码名称字典, 可以1支/多支股票， 如  {"000568":"泸州老窖", "000596":"古井贡酒",,,}
-
-        # 遍历股票
-        for k, v in stock_codes_names_dict.items():
-            piece_dict = {k: v}
-            # 收集单只股票，如从2010-01-01至今的估值数据
-            self.collect_a_period_time_estimation(piece_dict, start_date, self.today)
-
-    def collect_all_new_stocks_info_at_one_time_in_batch(self,start_date):
-        # 分批次，将所有新的，且需要被收集估值信息的股票，从起始日期开始，全部收集
-        # param: start_date, 起始日期，如 2010-01-01
-
-        # 总共需要将采集的股票数分成多少页，即分成多少批次
-        page_counter = self.page_counter_by_page_size_per_page()
-        # 日志记录
-        msg = '共需收集 ' + str(page_counter) + ' 页的股票估值信息'
-        custom_logger.CustomLogger().log_writter(msg, 'info')
-        for page in range(page_counter):
-            stock_codes_names_dict_in_page = self.paged_demanded_stocks(page, self.page_size)
-            try:
-                self.collect_all_new_stocks_info_at_one_time(start_date,stock_codes_names_dict_in_page)
-                # 日志记录
-                msg = '收集了第 ' + str(page + 1) + ' 页的股票估值信息'
-                custom_logger.CustomLogger().log_writter(msg, 'info')
-            except Exception as e:
-                # 日志记录
-                msg = '收集到第 ' + str(page + 1) + ' 页的股票估值信息时' + '发生错误 ' + str(e)
-                custom_logger.CustomLogger().log_writter(msg, 'error')
-
-
-    def collect_stocks_recent_info(self, stock_codes_names_dict, processing_date):
-        # 收集当前所有股票特定日期的的信息
-        # param: processing_date, 需要收集的日期
-        # param: stock_codes_names_dict 股票代码名称字典, 可以1支/多支股票， 如  {"000568":"泸州老窖", "000596":"古井贡酒",,,}
-
-        # 收集数据库中所有股票，今日的估值数据
-        try:
-            self.collect_a_special_date_estimation(stock_codes_names_dict, processing_date)
-            # 日志记录
-            msg = '收集了 '+ processing_date +'  '+ str(stock_codes_names_dict) +' 的股票估值信息'
-            custom_logger.CustomLogger().log_writter(msg, 'info')
-        except Exception as e:
-            # 日志记录
-            msg = '在收集 ' + processing_date +'  '+ str(stock_codes_names_dict) + ' 的股票估值信息时' + '发生错误 ' + str(e)
-            custom_logger.CustomLogger().log_writter(msg, 'error')
-
-    def collect_stocks_recent_info_in_batch(self, start_date):
-        # param: start_date, 起始日期，如 2010-01-01
-        # 分批次，收集当前所有股票最近的信息
-
-        plus_one_day = datetime.timedelta(days=1)
-        start_date = self.latest_collection_date(start_date)+plus_one_day
-        today_date = date.today()
-        while start_date <= today_date:
-            # 总共需要将采集的股票数分成多少页，即分成多少批次
-            page_counter = self.page_counter_by_page_size_per_page()
-            # 日志记录
-            #msg = '共需收集 ' + str(page_counter) + ' 页的股票估值信息'
-            #custom_logger.CustomLogger().log_writter(msg, 'info')
-            for page in range(page_counter):
-                stock_codes_names_dict_in_page = self.paged_demanded_stocks(page,self.page_size)
-                # 收集当前页内所有股票特定日期的的信息
-                self.collect_stocks_recent_info(stock_codes_names_dict_in_page,str(start_date))
-            start_date += plus_one_day
-
     def latest_collection_date(self):
         '''
         # 获取数据库中最新收集股票估值信息的日期
@@ -625,15 +561,6 @@ class CollectStockHistoricalEstimationInfo:
             return self.estimation_start_date
         return latest_collection_date['date']
 
-    def test_date_loop(self):
-
-        plus_one_day = datetime.timedelta(days=1)
-        start_date = self.latest_collection_date()+plus_one_day
-        today_date = date.today()
-
-        while start_date<=today_date:
-            print(str(start_date))
-            start_date += plus_one_day
 
     def collect_the_lacking_dates_estimation(self, saved_stock_info_dict, latest_collection_date, exchange_location_mic):
         '''
@@ -784,7 +711,6 @@ if __name__ == "__main__":
     #saved_stock_info_dict = {'000858': {'stock_code': '000858', 'stock_name': '五粮液', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002714': {'stock_code': '002714', 'stock_name': '牧原股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000568': {'stock_code': '000568', 'stock_name': '泸州老窖', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300498': {'stock_code': '300498', 'stock_name': '温氏股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002304': {'stock_code': '002304', 'stock_name': '洋河股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000895': {'stock_code': '000895', 'stock_name': '双汇发展', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000876': {'stock_code': '000876', 'stock_name': '新希望', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002385': {'stock_code': '002385', 'stock_name': '大北农', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000596': {'stock_code': '000596', 'stock_name': '古井贡酒', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300999': {'stock_code': '300999', 'stock_name': '金龙鱼', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300146': {'stock_code': '300146', 'stock_name': '汤臣倍健', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000998': {'stock_code': '000998', 'stock_name': '隆平高科', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002507': {'stock_code': '002507', 'stock_name': '涪陵榨菜', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002557': {'stock_code': '002557', 'stock_name': '洽洽食品', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002568': {'stock_code': '002568', 'stock_name': '百润股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002299': {'stock_code': '002299', 'stock_name': '圣农发展', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000930': {'stock_code': '000930', 'stock_name': '中粮科技', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002511': {'stock_code': '002511', 'stock_name': '中顺洁柔', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002157': {'stock_code': '002157', 'stock_name': '正邦科技', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000729': {'stock_code': '000729', 'stock_name': '燕京啤酒', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002124': {'stock_code': '002124', 'stock_name': '天邦股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002458': {'stock_code': '002458', 'stock_name': '益生股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000869': {'stock_code': '000869', 'stock_name': '张裕A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300741': {'stock_code': '300741', 'stock_name': '华宝股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002946': {'stock_code': '002946', 'stock_name': '新乳业', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002311': {'stock_code': '002311', 'stock_name': '海大集团', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000799': {'stock_code': '000799', 'stock_name': '酒鬼酒', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000860': {'stock_code': '000860', 'stock_name': '顺鑫农业', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002597': {'stock_code': '002597', 'stock_name': '金禾实业', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300957': {'stock_code': '300957', 'stock_name': '贝泰妮', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002505': {'stock_code': '002505', 'stock_name': '鹏都农牧', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002626': {'stock_code': '002626', 'stock_name': '金达威', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002481': {'stock_code': '002481', 'stock_name': '双塔食品', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002216': {'stock_code': '002216', 'stock_name': '三全食品', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300761': {'stock_code': '300761', 'stock_name': '立华股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300973': {'stock_code': '300973', 'stock_name': '立高食品', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '300783': {'stock_code': '300783', 'stock_name': '三只松鼠', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002461': {'stock_code': '002461', 'stock_name': '珠江啤酒', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000002': {'stock_code': '000002', 'stock_name': '万科A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '001979': {'stock_code': '001979', 'stock_name': '招商蛇口', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000069': {'stock_code': '000069', 'stock_name': '华侨城A', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000656': {'stock_code': '000656', 'stock_name': '金科股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000540': {'stock_code': '000540', 'stock_name': '中天金融', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002146': {'stock_code': '002146', 'stock_name': '荣盛发展', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000961': {'stock_code': '000961', 'stock_name': '中南建设', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002244': {'stock_code': '002244', 'stock_name': '滨江集团', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000402': {'stock_code': '000402', 'stock_name': '金融街', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '001914': {'stock_code': '001914', 'stock_name': '招商积余', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000718': {'stock_code': '000718', 'stock_name': '苏宁环球', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000671': {'stock_code': '000671', 'stock_name': '阳光城', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000031': {'stock_code': '000031', 'stock_name': '大悦城', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000001': {'stock_code': '000001', 'stock_name': '平安银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002142': {'stock_code': '002142', 'stock_name': '宁波银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002936': {'stock_code': '002936', 'stock_name': '郑州银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002966': {'stock_code': '002966', 'stock_name': '苏州银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002958': {'stock_code': '002958', 'stock_name': '青农商行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002839': {'stock_code': '002839', 'stock_name': '张家港行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002807': {'stock_code': '002807', 'stock_name': '江阴银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002948': {'stock_code': '002948', 'stock_name': '青岛银行', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002646': {'stock_code': '002646', 'stock_name': '天佑德酒', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002582': {'stock_code': '002582', 'stock_name': '好想你', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002746': {'stock_code': '002746', 'stock_name': '仙坛股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002100': {'stock_code': '002100', 'stock_name': '天康生物', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002567': {'stock_code': '002567', 'stock_name': '唐人神', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '000848': {'stock_code': '000848', 'stock_name': '承德露露', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002688': {'stock_code': '002688', 'stock_name': '金河生物', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}, '002234': {'stock_code': '002234', 'stock_name': '民和股份', 'exchange_location': 'sz', 'exchange_location_mic': 'XSHE'}}
     #go.collect_a_special_date_estimation(saved_stock_info_dict, "2022-04-13", "XSHE")
     # print(content)
-    #go.collect_all_new_stocks_info_at_one_time()
     #result = go.is_existing("000568", "泸州老窖", "2020-11-19")
     #print(result)
     go.main()
