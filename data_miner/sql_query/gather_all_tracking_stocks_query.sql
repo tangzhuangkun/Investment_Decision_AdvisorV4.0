@@ -7,4 +7,5 @@ FROM financial_data.mix_top10_with_bottom_no_repeat
 UNION
 SELECT DISTINCT target_code as stock_code, target_name as stock_name, exchange_location, exchange_location_mic
 FROM target_pool.investment_target
-WHERE target_type = 'stock';
+WHERE target_type = 'stock'
+ON duplicate KEY UPDATE id = id;
