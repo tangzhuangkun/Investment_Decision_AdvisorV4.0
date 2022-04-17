@@ -93,7 +93,7 @@ class CollectIndexEstimationFromLXR:
             req = requests.post(url, data=values, headers=headers)
             content = req.json()
 
-            if 'message' in content and content['message'] == "Illegal token.":
+            if 'error' in content and content.get('error').get('message') == "Illegal token.":
                 # 日志记录失败
                 msg = '无法使用理杏仁token ' + token + ' ' + '来采集指数估值 ' + \
                       index_code+ '' +self.index_code_name_dict.get(index_code) + ' ' + start_date + ' ' + end_date \
@@ -176,7 +176,7 @@ class CollectIndexEstimationFromLXR:
         req = requests.post(url, data=values, headers=headers)
         content = req.json()
 
-        if 'message' in content and content['message'] == "Illegal token.":
+        if 'error' in content and content.get('error').get('message') == "Illegal token.":
             # 日志记录失败
             msg = '无法使用理杏仁token ' + token + ' ' + '来采集指数估值 ' + \
                   str(self.index_code_name_dict) + ' ' + date + ' 报错token为 ' + token
