@@ -1,10 +1,10 @@
-PyMySQL==0.9.3
-APScheduler==3.6.3
-fake_useragent==0.1.11
-requests==2.24.0
 Flask==2.0.2
-pandas==1.0.5
-akshare==1.4.78
 xlrd==1.2.0
 DBUtils==2.0
-beautifulsoup4==4.10.0
+akshare==1.4.78
+PyMySQL==0.9.3
+fake_useragent==0.1.11
+APScheduler==3.6.3
+requests==2.24.0
+beautifulsoup4==4.11.1
+pandas==1.0.5
