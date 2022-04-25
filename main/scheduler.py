@@ -134,10 +134,10 @@ class Scheduler:
 			custom_logger.CustomLogger().log_writter(e, 'error')
 
 		try:
-			# 每个交易日18：10计算并通过邮件/微信发送股当日债收益比
+			# 每个交易日18：30计算并通过邮件/微信发送股当日债收益比
 			scheduler.add_job(func=notification_plan_after_trading.NotificationPlanAfterTrading().equity_bond_yield_strategy_estimation_notification,
 							  trigger='cron',
-							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=10,
+							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=30,
 							  id='weekdayAfterTradingNotification')
 		except Exception as e:
 			# 抛错
