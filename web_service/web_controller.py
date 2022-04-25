@@ -68,5 +68,27 @@ def operate_target():
     else:
         return jsonify({"msg": "调用方式出错", "code": 400})
 
+
+    @app.route("/mute", methods=['GET', 'POST'])
+    def mute():
+        '''
+        暂停标的策略
+        :return:
+        '''
+
+        # 标的类型，如 index, stock
+        target_type = request.args.get("target_type")
+        # 标的代码，如 指数代码 399997，股票代码 600519
+        target_code = request.args.get("target_code")
+        # 跟踪标的名称，如 中证白酒指数, 万科
+        target_name = request.args.get("target_name")
+
+    @app.route("/restart", methods=['GET', 'POST'])
+    def restart():
+        '''
+        收盘后，将所有暂停标的策略重新开启，下一个交易日又可生效
+        :return:
+        '''
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True,threaded=True)
