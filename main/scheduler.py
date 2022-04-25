@@ -18,6 +18,7 @@ import data_collector.collect_index_weight_from_cnindex_interface as collect_ind
 import data_collector.collect_excellent_index_from_cs_index as collect_excellent_index_from_cs_index
 import data_collector.collect_excellent_index_from_cn_index as collect_excellent_index_from_cn_index
 import data_miner.gather_all_tracking_stocks as gather_all_tracking_stocks
+import web_service.web_service_impl as web_service_impl
 
 class Scheduler:
 	# 任务调度器，根据时间安排工作
@@ -139,6 +140,16 @@ class Scheduler:
 							  trigger='cron',
 							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=18, minute=30,
 							  id='weekdayAfterTradingNotification')
+		except Exception as e:
+			# 抛错
+			custom_logger.CustomLogger().log_writter(e, 'error')
+
+		try:
+			# 每个交易日19：01, 将所有暂停标的策略重新开启，下一个交易日又可生效
+			scheduler.add_job(func=web_service_impl.WebServericeImpl().restart_all_mute_target,
+							  trigger='cron',
+							  month='1-12', day_of_week='mon,tue,wed,thu,fri', hour=19, minute=1,
+							  id='weekdayRestartAllMuteTarget')
 		except Exception as e:
 			# 抛错
 			custom_logger.CustomLogger().log_writter(e, 'error')

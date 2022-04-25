@@ -413,5 +413,55 @@ class WebServericeImpl:
                     custom_logger.CustomLogger().log_writter(msg, 'error')
                     return {"msg": msg, "code": 400, "status": "Failure"}
 
+    def mute_impl(self, operation_target_params):
+        '''
+        暂停标的策略
+        :param operation_target_params:
+                        target_type: 标的类型，如 index, stock，必选
+                        target_code: 标的代码，如 指数代码 399997，股票代码 600519，必选
+        :return:
+        '''
+        updating_sql = " UPDATE investment_target SET status = 'inactive' WHERE  target_type = '%s' AND target_code = '%s' " \
+                       % (operation_target_params.target_type, operation_target_params.target_code)
+        # 是否执行成功
+        is_updated_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", updating_sql)
+        # 如果插入成功
+        if (is_updated_successfully_dict.get("status")):
+            # 日志记录
+            msg = '暂停跟踪投资标的-' + operation_target_params.target_code + '-成功'
+            custom_logger.CustomLogger().log_writter(msg, 'info')
+            return {"msg": msg, "code": 200, "status": "Success"}
+        # 如果插入失败
+        else:
+            # 日志记录
+            msg = '暂停跟踪投资标的-' + operation_target_params.target_code + ' 失败 ' + is_updated_successfully_dict.get(
+                "msg")
+            custom_logger.CustomLogger().log_writter(msg, 'error')
+            return {"msg": msg, "code": 400, "status": "Failure"}
+
+
+    def restart_all_mute_target(self):
+        '''
+        将所有暂停标的策略重新开启，下一个交易日又可生效
+        :return:
+        '''
+        updating_sql = " UPDATE investment_target SET status = 'active' WHERE  status = 'inactive' "
+        # 是否执行成功
+        is_updated_successfully_dict = db_operator.DBOperator().operate("insert", "target_pool", updating_sql)
+        # 如果插入成功
+        if (is_updated_successfully_dict.get("status")):
+            # 日志记录
+            msg = '重新跟踪所有被暂停的投资标的-成功'
+            custom_logger.CustomLogger().log_writter(msg, 'info')
+            return {"msg": msg, "code": 200, "status": "Success"}
+        # 如果插入失败
+        else:
+            # 日志记录
+            msg = '重新跟踪所有被暂停的投资标的-失败 ' + is_updated_successfully_dict.get("msg")
+            custom_logger.CustomLogger().log_writter(msg, 'error')
+            return {"msg": msg, "code": 400, "status": "Failure"}
+
+
 if __name__ == '__main__':
     go = WebServericeImpl()
+    go.restart_all_mute_target()

@@ -9,6 +9,7 @@ import sys
 sys.path.append('..')
 import web_service.web_service_impl as web_service_impl
 import vo.operate_target_vo as operate_target_vo
+import vo.mute_target_vo as mute_target_vo
 from flask import Flask, request, jsonify  # 引入request对象
 
 app = Flask(__name__)
@@ -69,26 +70,37 @@ def operate_target():
         return jsonify({"msg": "调用方式出错", "code": 400})
 
 
-    @app.route("/mute", methods=['GET', 'POST'])
-    def mute():
-        '''
-        暂停标的策略
-        :return:
-        '''
-
+@app.route("/mute", methods=['GET', 'POST'])
+def mute():
+    '''
+    暂停标的策略
+    :return:
+    '''
+    if request.method == 'POST':
         # 标的类型，如 index, stock
         target_type = request.args.get("target_type")
         # 标的代码，如 指数代码 399997，股票代码 600519
         target_code = request.args.get("target_code")
         # 跟踪标的名称，如 中证白酒指数, 万科
         target_name = request.args.get("target_name")
+        # 包装成一个对象
+        params = mute_target_vo.MuteTargetVo(target_type, target_code)
+        # 实现 更新，创建
+        return jsonify(web_service_impl.WebServericeImpl().mute_impl(params))
+    else:
+        return jsonify({"msg": "调用方式出错", "code": 400})
 
-    @app.route("/restart", methods=['GET', 'POST'])
-    def restart():
-        '''
-        收盘后，将所有暂停标的策略重新开启，下一个交易日又可生效
-        :return:
-        '''
+
+@app.route("/restart_all_mute_target", methods=['GET', 'POST'])
+def restart_all_mute_target():
+    '''
+    将所有暂停标的策略重新开启，下一个交易日又可生效
+    :return:
+    '''
+    if request.method == 'POST':
+        return jsonify(web_service_impl.WebServericeImpl().restart_all_mute_target())
+    else:
+        return jsonify({"msg": "调用方式出错", "code": 400})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True,threaded=True)
