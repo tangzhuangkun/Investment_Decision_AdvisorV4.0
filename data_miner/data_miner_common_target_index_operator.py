@@ -52,7 +52,7 @@ class DataMinerCommonTargetIndexOperator:
 
     def index_valuated_by_method(self, method):
         # 获取通过xx估值法 估值的指数代码及其对应名称
-        # 输入：method, 估值方式，目前有 pe：市盈率估值法； pb:市净率估值法
+        # 输入：method, 估值方式，目前有 pe_ttm：市盈率估值法； pb:市净率估值法
         # 输出：使用该估值方式的指数代码，中文名称, 地点缩写+指数代码，指数代码+证券市场代码
         # 如 [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
 

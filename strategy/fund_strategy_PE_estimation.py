@@ -299,7 +299,7 @@ class FundStrategyPEEstimation:
 
         # [{'index_code': '399965', 'index_name': '中证800地产', 'index_code_with_init': 'sz399965', 'index_code_with_market_code': '399965.XSHE'},，，]
         indexes_and_their_names = data_miner_common_target_index_operator.DataMinerCommonTargetIndexOperator().index_valuated_by_method(
-            'pe')
+            'pe_ttm')
 
         # 拼接需要发送的指数实时动态市盈率信息
         indexes_and_real_time_PE_msg = '指数实时动态市盈率和自2010年来历史百分位： \n\n'
