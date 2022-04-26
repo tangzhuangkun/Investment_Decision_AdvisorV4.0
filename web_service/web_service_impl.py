@@ -59,7 +59,7 @@ class WebServericeImpl:
         :return: boolean，True或者False
         '''
         # 是否为 市净率，市盈率，市销率，股息率，净资产回报率，peg策略
-        if(valuation_method in ["pb","pe","ps","dr","roe","peg"]):
+        if(valuation_method in ["pb","pe_ttm","ps_ttm","dr","roe","peg"]):
             return True
         else:
             return False
