@@ -136,7 +136,8 @@ select raw.stock_code, raw.stock_name, raw.date, raw.pe_ttm_nonrecurring, raw.ro
 (select stock_code, stock_name, date, pe_ttm_nonrecurring,
 row_number() OVER (partition by stock_code ORDER BY pe_ttm_nonrecurring asc) AS row_num,
 percent_rank() OVER (partition by stock_code ORDER BY pe_ttm_nonrecurring asc) AS percent_num
-from stocks_main_estimation_indexes_historical_data) raw
+from stocks_main_estimation_indexes_historical_data
+where pe_ttm_nonrecurring>0) raw
 left join
 (select stock_code, count(*) as total_record from stocks_main_estimation_indexes_historical_data group by stock_code) as record
 on raw.stock_code = record.stock_code
@@ -165,6 +166,43 @@ order by raw.percent_num asc;
 601328	交通银行	2022-04-07	4.3793931290461080	192	2962	0.06450523471800068
 002481	双塔食品	2022-04-07	35.0915181178522700	174	2665	0.06493993993993993
 '''
+
+
+
+
+'''
+-- 获取股票，股票名称，最新日期，市盈率，市盈率低估排名，共有该股票多少交易日记录，当前市盈率位于历史百分比位置
+select raw.stock_code, raw.stock_name, raw.date, raw.pe_ttm, raw.row_num, record.total_record, raw.percent_num from
+(select stock_code, stock_name, date, pe_ttm,
+row_number() OVER (partition by stock_code ORDER BY pe_ttm asc) AS row_num,
+percent_rank() OVER (partition by stock_code ORDER BY pe_ttm asc) AS percent_num
+from stocks_main_estimation_indexes_historical_data
+where pe_ttm>0) raw
+left join
+(select stock_code, count(*) as total_record from stocks_main_estimation_indexes_historical_data group by stock_code) as record
+on raw.stock_code = record.stock_code
+where raw.date = (select max(date) from stocks_main_estimation_indexes_historical_data)
+and record.total_record>1500
+order by raw.percent_num asc;
+
+stock_code	stock_name	date	pe_ttm	row_num	total_record	percent_num
+00700	腾讯控股	2022-04-27	11.7064646471295410000000	2	3035	0.00033068783068783067
+002146	荣盛发展	2022-04-27	2.3989549224785240000000	2	2950	0.00033909799932180403
+002511	中顺洁柔	2022-04-27	18.6105681708996970000000	2	2733	0.0003661662394727206
+603866	桃李面包	2022-04-27	24.1513178494941880000000	2	1544	0.0006480881399870382
+000656	金科股份	2022-04-27	2.9845384324964420000000	3	2909	0.0007044734061289186
+600848	上海临港	2022-04-27	19.8647774977377400000000	3	2654	0.0008230452674897119
+300146	汤臣倍健	2022-04-27	18.7288218320696200000000	3	2591	0.0008507018290089324
+600663	陆家嘴	2022-04-27	9.5547115861500240000000	5	2868	0.0013951866062085804
+600064	南京高科	2022-04-27	5.0791670862674720000000	6	2985	0.001675603217158177
+601818	光大银行	2022-04-27	4.0081734453926785000000	8	2821	0.0024822695035460994
+600015	华夏银行	2022-04-27	3.5453218427640256000000	12	2973	0.0033647375504710633
+000671	阳光城	2022-04-27	1.9200248464295255000000	16	2919	0.004797806716929404
+002461	珠江啤酒	2022-04-27	26.7174377511127550000000	21	2788	0.007176175098672408
+600895	张江高科	2022-04-27	10.1544281938150080000000	23	2984	0.0073751257123700975
+'''
+
+
 
 
 
