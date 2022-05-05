@@ -46,6 +46,7 @@ class DataCollectorCommonIndexCollector:
         # 接口返回如： 涨跌率, -0.86;
         # 只取 涨跌率
         url = 'https://qt.gtimg.cn/q=s_' + code_with_location
+        requests.packages.urllib3.disable_warnings()
         content = requests.get(url, verify=False)
         content_split = content.text.split('~')
         return decimal.Decimal(content_split[5])
