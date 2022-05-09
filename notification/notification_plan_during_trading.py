@@ -115,8 +115,8 @@ class NotificationPlanDuringTrading:
 if __name__ == '__main__':
     time_start = time.time()
     go = NotificationPlanDuringTrading()
-    #go.daily_estimation_notification()
-    go.minutely_estimation_notification()
+    go.daily_estimation_notification()
+    #go.minutely_estimation_notification()
     time_end = time.time()
     print(time_end - time_start)
 
