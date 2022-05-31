@@ -543,15 +543,17 @@ class CollectStockHistoricalEstimationInfo:
         else:
             return True
 
-    def latest_collection_date(self):
+    def latest_collection_date(self,exchange_location_mic):
         '''
         # 获取数据库中最新收集股票估值信息的日期
         # 返回 如果数据库有最新的日期，则返回最新收集股票估值信息的日期，类型为datetime.date， 如 2021-05-14
         #     如果数据库无最新的日期，返回起始日期 2010-01-01
+        :param exchange_location_mic: 交易所MIC码（如XSHG, XSHE，XHKG）均可， 大小写均可
         :return:
         '''
 
-        selecting_sql = "SELECT max(date) as date FROM stocks_main_estimation_indexes_historical_data"
+        selecting_sql = """SELECT max(date) as date FROM stocks_main_estimation_indexes_historical_data 
+                            where exchange_location_mic = '%s' """ % (exchange_location_mic)
         latest_collection_date = db_operator.DBOperator().select_one("financial_data", selecting_sql)
         # 如果数据库无最新的日期，为空
         if latest_collection_date['date'] == None:
@@ -591,14 +593,14 @@ class CollectStockHistoricalEstimationInfo:
         # 并决定是 同时收集多只股票特定日期的数据 还是 分多次收集个股票一段时间的数据
         # param: start_date, 起始日期，如 2010-01-01
 
-
         # 获取所有跟踪股票的交易所代码，按交易所逐个收集股票估值信息
         # 如 ['XSHE', 'XHKG', 'XSHG']
         all_exchange_locaiton_mics = self.get_all_exchange_locaiton_mics()
-        # 获取数据库中最新收集股票估值信息的日期
-        latest_collection_date = self.latest_collection_date()
+
         # 遍历交易所代码
         for exchange_location_mic in all_exchange_locaiton_mics:
+            # 获取数据库中,该交易所最新收集股票估值信息的日期
+            latest_collection_date = self.latest_collection_date(exchange_location_mic)
             # 如果最新收集日期与起始日期（2010-01-01）， 说明数据库为空，所有都需要从头开始收集全部股票的数据
             if(latest_collection_date==self.estimation_start_date):
                 # 数据库中，全部需要被收集估值信息的股票
